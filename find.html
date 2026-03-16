@@ -1,53 +1,180 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <link rel="icon" type="image/png" href="images/l.png">
-    <link rel="stylesheet" href="css/style.css">
-	<!-- أيقونات بأحجام مختلفة -->
-	<link rel="icon" type="image/png" sizes="16x16" href="images/l.png">
-	<link rel="icon" type="image/png" sizes="32x32" href="images/l.png">
-	<link rel="apple-touch-icon" href="images/l.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aulo - الرئيسية</title>
+    <title>Aulo - البحث</title>
+    <link rel="icon" type="image/png" href="images/l.png">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .search-wrapper {
+            position: sticky;
+            top: 60px;
+            background: #fff;
+            padding: 15px 0;
+            z-index: 100;
+        }
+        .search-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .search-input-container i {
+            position: absolute;
+            right: 15px;
+            color: var(--secondary-text);
+        }
+        #user-search {
+            padding-right: 40px;
+            border-radius: 25px;
+            background: #f1f1f1;
+            border: none;
+            height: 45px;
+            font-size: 16px;
+            width: 100%;
+        }
+        #user-search:focus {
+            outline: none;
+            border: 2px solid var(--primary-color);
+            background: white;
+        }
+        .results-container {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        .user-result-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 5px;
+            border-bottom: 1px solid var(--border-color);
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.2s;
+        }
+        .user-result-item:active {
+            background: #f9f9f9;
+        }
+        .result-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-left: 15px;
+            background: var(--skeleton-bg);
+        }
+        .result-info {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        .result-display-name {
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .result-username {
+            font-size: 13px;
+            color: var(--secondary-text);
+        }
+        .result-bio {
+            font-size: 12px;
+            color: var(--secondary-text);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+        .no-results {
+            text-align: center;
+            margin-top: 50px;
+            color: var(--secondary-text);
+        }
+        .no-results i {
+            font-size: 50px;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+        .search-hint {
+            text-align: center;
+            margin-top: 30px;
+            color: var(--secondary-text);
+            font-size: 14px;
+        }
+        .search-hint i {
+            color: var(--primary-color);
+            margin-left: 5px;
+        }
+        .loading-spinner {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .loading-spinner i {
+            color: var(--primary-color);
+            font-size: 24px;
+        }
+        .recent-searches {
+            margin-top: 20px;
+        }
+        .recent-title {
+            font-size: 14px;
+            color: var(--secondary-text);
+            margin-bottom: 10px;
+        }
+        .recent-item {
+            display: inline-block;
+            background: #f1f1f1;
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-left: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .recent-item:hover {
+            background: #e1e1e1;
+        }
+    </style>
 </head>
 <body>
 
     <header>
         <div class="logo-container">
-            <img src="images/logo.png" alt="Aulo" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+            <img src="images/logo.png" alt="Aulo" onclick="location.href='main.html'">
         </div>
-        <div class="header-actions">
-            <a href="not.html" class="not-icon">
-                <i class="fa-regular fa-bell" style="font-size: 22px; color: var(--text-color);"></i>
-                <div id="not-dot" class="not-dot" style="display: none;"></div>
-            </a>
-        </div>
+        <div style="font-weight: bold;">البحث</div>
+        <div style="width: 35px;"></div>
     </header>
 
     <main class="container">
-        <div id="feed" class="feed-container">
-            <div class="post-card skeleton-card">
-                <div class="post-header">
-                    <div class="skeleton skeleton-avatar"></div>
-                    <div class="post-info">
-                        <div class="skeleton skeleton-text" style="width: 100px;"></div>
-                        <div class="skeleton skeleton-text" style="width: 60px;"></div>
-                    </div>
-                </div>
-                <div class="skeleton skeleton-media"></div>
+        <div class="search-wrapper">
+            <div class="search-input-container">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="user-search" placeholder="ابحث عن صديق بالاسم أو اليوزر..." autocomplete="off" dir="rtl">
             </div>
         </div>
 
-        <div id="load-more-trigger" style="height: 20px;"></div>
+        <div id="recent-searches" class="recent-searches" style="display: none;">
+            <div class="recent-title">عمليات البحث الأخيرة</div>
+            <div id="recent-list"></div>
+        </div>
+
+        <div id="search-results" class="results-container"></div>
+
+        <div id="loading-spinner" class="loading-spinner" style="display: none;">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+        </div>
+
+        <div id="search-hint" class="search-hint">
+            <i class="fa-regular fa-keyboard"></i>
+            اكتب حرفين على الأقل للبحث
+        </div>
     </main>
 
     <nav class="bottom-nav">
-        <a href="main.html" class="nav-item active"><i class="fa-solid fa-house"></i></a>
-        <a href="find.html" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i></a>
+        <a href="main.html" class="nav-item"><i class="fa-solid fa-house"></i></a>
+        <a href="find.html" class="nav-item active"><i class="fa-solid fa-magnifying-glass"></i></a>
         <a href="post.html" class="nav-item"><i class="fa-solid fa-plus-square"></i></a>
         <a href="chatmain.html" class="nav-item"><i class="fa-solid fa-paper-plane"></i></a>
         <a href="myprofile.html" class="nav-item"><i class="fa-solid fa-user"></i></a>
@@ -76,236 +203,179 @@
         const auth = firebase.auth();
 
         let currentUser = null;
-        let lastPostTime = Date.now();
-        let loading = false;
-        let allPostsLoaded = false;
-        const POSTS_PER_PAGE = 5;
+        let cachedUsers = [];
 
-        function formatDate(timestamp) {
-            if (!timestamp) return '';
-            const date = new Date(timestamp);
-            const day = date.getDate().toString().padStart(2, '0');
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const year = date.getFullYear();
-            return `${day}/${month}/${year}`;
-        }
+        const searchInput = document.getElementById('user-search');
+        const resultsContainer = document.getElementById('search-results');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const searchHint = document.getElementById('search-hint');
+        const recentSearches = document.getElementById('recent-searches');
+        const recentList = document.getElementById('recent-list');
 
-        async function loadPosts(loadMore = false) {
-            if (loading || allPostsLoaded) return;
-            
-            loading = true;
-            const feed = document.getElementById('feed');
-            
-            if (!loadMore) {
-                feed.innerHTML = generateSkeletonCards(3);
-                lastPostTime = Date.now();
-            }
-            
+        async function loadAllUsers() {
+            if (cachedUsers.length > 0) return cachedUsers;
+
             try {
-                const postsRef = database.ref('posts')
-                    .orderByChild('timestamp')
-                    .endAt(lastPostTime)
-                    .limitToLast(POSTS_PER_PAGE + 1);
-                
-                const snapshot = await postsRef.once('value');
-                const posts = [];
+                const snapshot = await database.ref('users').once('value');
+                const users = [];
                 
                 snapshot.forEach((child) => {
-                    posts.push({ id: child.key, ...child.val() });
-                });
-                
-                posts.reverse();
-                
-                if (posts.length <= POSTS_PER_PAGE) {
-                    allPostsLoaded = true;
-                } else {
-                    posts.pop();
-                    lastPostTime = posts[posts.length - 1].timestamp;
-                }
-                
-                if (!loadMore) {
-                    feed.innerHTML = '';
-                }
-                
-                if (posts.length === 0 && !loadMore) {
-                    feed.innerHTML = '<div style="text-align: center; padding: 50px;"><i class="fa-regular fa-newspaper"></i><p>لا توجد منشورات بعد</p></div>';
-                    loading = false;
-                    return;
-                }
-                
-                for (const post of posts) {
-                    const userData = await getUserData(post.userId);
-                    const isLiked = await checkIfLiked(post.id);
-                    feed.appendChild(createPostElement(post, userData, isLiked));
-                }
-                
-            } catch (error) {
-                console.error('Error loading posts:', error);
-                if (!loadMore) {
-                    feed.innerHTML = '<div style="text-align: center; padding: 50px;"><i class="fa-solid fa-circle-exclamation"></i><p>خطأ في تحميل المنشورات</p><button onclick="location.reload()" style="background: var(--primary-color); color: white; border: none; padding: 8px 20px; border-radius: 20px; margin-top: 10px;">إعادة المحاولة</button></div>';
-                }
-            } finally {
-                loading = false;
-            }
-        }
-
-        async function getUserData(userId) {
-            try {
-                const snapshot = await database.ref(`users/${userId}`).once('value');
-                return snapshot.val() || {};
-            } catch (error) {
-                return {};
-            }
-        }
-
-        async function checkIfLiked(postId) {
-            if (!currentUser) return false;
-            try {
-                const snapshot = await database.ref(`likes/${postId}/${currentUser.uid}`).once('value');
-                return snapshot.exists();
-            } catch (error) {
-                return false;
-            }
-        }
-
-        function createPostElement(post, userData, isLiked = false) {
-            const postCard = document.createElement('div');
-            postCard.className = 'post-card';
-            
-            const contentHTML = post.text ? `<div class="post-content">${post.text}</div>` : '';
-            
-            let mediaHTML = '';
-            if (post.media && post.media.length > 0) {
-                const gridClass = `media-grid-${Math.min(post.media.length, 5)}`;
-                mediaHTML = `<div class="post-media-container ${gridClass}">`;
-                post.media.forEach(media => {
-                    if (media.type === 'image') {
-                        mediaHTML += `<img src="${media.url}" alt="صورة" loading="lazy">`;
-                    } else if (media.type === 'video') {
-                        mediaHTML += `<video src="${media.url}" controls></video>`;
+                    const user = child.val();
+                    if (user.uid !== currentUser?.uid) {
+                        users.push(user);
                     }
                 });
-                mediaHTML += '</div>';
+                
+                cachedUsers = users;
+                return users;
+            } catch (error) {
+                console.error('Error loading users:', error);
+                return [];
             }
-            
-            const likeClass = isLiked ? 'active' : '';
-            
-            postCard.innerHTML = `
-                <div class="post-header" onclick="location.href='profile.html?id=${post.userId}'">
-                    <img src="${userData.avatar || 'images/profile.png'}" class="user-avatar">
-                    <div class="post-info">
-                        <span class="display-name">${userData.displayName || userData.username || 'مستخدم'}</span>
-                        <span class="post-time">${formatDate(post.timestamp)}</span>
-                    </div>
-                </div>
-                ${contentHTML}
-                ${mediaHTML}
-                <div class="post-actions">
-                    <button class="like-btn ${likeClass}" onclick="toggleLike('${post.id}', this)">
-                        <i class="fa-${isLiked ? 'solid' : 'regular'} fa-heart"></i>
-                    </button>
-                    <span class="like-count">${post.likes || 0}</span>
-                </div>
-            `;
-            
-            return postCard;
         }
 
-        window.toggleLike = async (postId, btn) => {
-            if (!currentUser) {
-                window.location.href = 'index.html';
-                return;
-            }
-            
-            try {
-                const likeRef = database.ref(`likes/${postId}/${currentUser.uid}`);
-                const snapshot = await likeRef.once('value');
-                const postRef = database.ref(`posts/${postId}`);
-                const postSnapshot = await postRef.once('value');
-                const post = postSnapshot.val();
-                
-                if (snapshot.exists()) {
-                    await likeRef.remove();
-                    await postRef.update({ likes: (post.likes || 1) - 1 });
-                    btn.classList.remove('active');
-                    btn.querySelector('i').className = 'fa-regular fa-heart';
-                } else {
-                    await likeRef.set({ userId: currentUser.uid, timestamp: Date.now() });
-                    await postRef.update({ likes: (post.likes || 0) + 1 });
-                    btn.classList.add('active');
-                    btn.querySelector('i').className = 'fa-solid fa-heart';
-                    
-                    if (post.userId !== currentUser.uid) {
-                        await database.ref(`notifications/${post.userId}`).push({
-                            type: 'like',
-                            postId: postId,
-                            userId: currentUser.uid,
-                            timestamp: Date.now(),
-                            read: false
-                        });
-                    }
-                }
-                
-                const likeCountSpan = btn.nextElementSibling;
-                likeCountSpan.textContent = parseInt(likeCountSpan.textContent) + (snapshot.exists() ? -1 : 1);
-                
-            } catch (error) {
-                console.error('Error toggling like:', error);
-            }
-        };
+        function searchUsers(query) {
+            if (!query || query.length < 2) return [];
 
-        function generateSkeletonCards(count) {
-            let html = '';
-            for (let i = 0; i < count; i++) {
-                html += `
-                    <div class="post-card skeleton-card">
-                        <div class="post-header">
-                            <div class="skeleton skeleton-avatar"></div>
-                            <div class="post-info">
-                                <div class="skeleton skeleton-text" style="width: 100px;"></div>
-                                <div class="skeleton skeleton-text" style="width: 60px;"></div>
-                            </div>
-                        </div>
-                        <div class="skeleton skeleton-media"></div>
+            query = query.toLowerCase().trim();
+            
+            return cachedUsers.filter(user => {
+                const username = (user.username || '').toLowerCase();
+                const displayName = (user.displayName || '').toLowerCase();
+                
+                return username.includes(query) || displayName.includes(query);
+            });
+        }
+
+        function displayResults(users) {
+            resultsContainer.innerHTML = '';
+            
+            if (users.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="no-results">
+                        <i class="fa-regular fa-face-frown"></i>
+                        <p>لا توجد نتائج مطابقة</p>
+                        <p style="font-size: 13px;">جرب كلمات بحث أخرى</p>
                     </div>
                 `;
+                return;
             }
-            return html;
+
+            users.forEach(user => {
+                const resultItem = document.createElement('a');
+                resultItem.href = `profile.html?id=${user.uid}`;
+                resultItem.className = 'user-result-item';
+                
+                const bio = user.bio ? (user.bio.length > 30 ? user.bio.substring(0, 30) + '...' : user.bio) : '';
+                
+                resultItem.innerHTML = `
+                    <img src="${user.avatar || 'images/profile.png'}" class="result-avatar" loading="lazy">
+                    <div class="result-info">
+                        <span class="result-display-name">${user.displayName || user.username}</span>
+                        <span class="result-username">@${user.username}</span>
+                        ${bio ? `<span class="result-bio">${bio}</span>` : ''}
+                    </div>
+                `;
+                
+                resultsContainer.appendChild(resultItem);
+            });
         }
 
-        window.addEventListener('scroll', () => {
-            const trigger = document.getElementById('load-more-trigger');
-            if (!trigger) return;
+        function saveRecentSearch(query) {
+            let recents = JSON.parse(localStorage.getItem('recentSearches') || '[]');
+            recents = recents.filter(q => q !== query);
+            recents.unshift(query);
+            recents = recents.slice(0, 5);
+            localStorage.setItem('recentSearches', JSON.stringify(recents));
+            showRecentSearches();
+        }
+
+        function showRecentSearches() {
+            const recents = JSON.parse(localStorage.getItem('recentSearches') || '[]');
             
-            const rect = trigger.getBoundingClientRect();
-            if (rect.top <= window.innerHeight && !loading && !allPostsLoaded) {
-                loadPosts(true);
+            if (recents.length === 0) {
+                recentSearches.style.display = 'none';
+                return;
+            }
+
+            recentList.innerHTML = '';
+            recents.forEach(query => {
+                const recentItem = document.createElement('span');
+                recentItem.className = 'recent-item';
+                recentItem.textContent = query;
+                recentItem.onclick = () => {
+                    searchInput.value = query;
+                    performSearch(query);
+                };
+                recentList.appendChild(recentItem);
+            });
+
+            recentSearches.style.display = 'block';
+        }
+
+        async function performSearch(query) {
+            if (!query || query.length < 2) {
+                searchHint.style.display = 'block';
+                resultsContainer.innerHTML = '';
+                return;
+            }
+
+            loadingSpinner.style.display = 'block';
+            searchHint.style.display = 'none';
+            recentSearches.style.display = 'none';
+
+            setTimeout(() => {
+                const results = searchUsers(query);
+                loadingSpinner.style.display = 'none';
+                displayResults(results);
+                
+                if (query.length >= 2) {
+                    saveRecentSearch(query);
+                }
+            }, 300);
+        }
+
+        let searchTimeout;
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            
+            if (searchTimeout) clearTimeout(searchTimeout);
+
+            if (query.length < 2) {
+                resultsContainer.innerHTML = '';
+                searchHint.style.display = 'block';
+                showRecentSearches();
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                performSearch(query);
+            }, 500);
+        });
+
+        searchInput.addEventListener('focus', () => {
+            if (searchInput.value.trim().length < 2) {
+                showRecentSearches();
             }
         });
 
-        async function updateNotificationDot() {
-            if (!currentUser) return;
+        async function initializeSearch() {
+            loadingSpinner.style.display = 'block';
             try {
-                const snapshot = await database.ref(`notifications/${currentUser.uid}`)
-                    .orderByChild('read')
-                    .equalTo(false)
-                    .limitToFirst(1)
-                    .once('value');
-                
-                const dot = document.getElementById('not-dot');
-                if (dot) {
-                    dot.style.display = snapshot.exists() ? 'block' : 'none';
-                }
+                await loadAllUsers();
+                loadingSpinner.style.display = 'none';
+                showRecentSearches();
+                console.log(`تم تحميل ${cachedUsers.length} مستخدم`);
             } catch (error) {
-                console.error('Error checking notifications:', error);
+                console.error('Error initializing search:', error);
+                loadingSpinner.style.display = 'none';
             }
         }
 
         auth.onAuthStateChanged((user) => {
             if (user) {
                 currentUser = user;
-                loadPosts(false);
-                updateNotificationDot();
+                initializeSearch();
             } else {
                 window.location.href = 'index.html';
             }

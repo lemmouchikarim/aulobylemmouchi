@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <link rel="icon" type="image/png" href="images/l.png">
+    <link rel="stylesheet" href="css/style.css">
+	<!-- أيقونات بأحجام مختلفة -->
+	<link rel="icon" type="image/png" sizes="16x16" href="images/l.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="images/l.png">
+	<link rel="apple-touch-icon" href="images/l.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aulo - الإشعارات</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .notifications-list {
+            display: flex;
+            flex-direction: column;
+            margin-top: 10px;
+        }
+        .not-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            text-decoration: none;
+            color: inherit;
+            background: #fff;
+            transition: background 0.2s;
+            position: relative;
+        }
+        .not-item.unread {
+            background: #f8f0ff;
+            border-right: 4px solid var(--primary-color);
+        }
+        .not-item:active {
+            background: #f9f9f9;
+        }
+        .not-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-left: 15px;
+            border: 2px solid var(--border-color);
+        }
+        .not-content {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .not-content b {
+            color: var(--text-color);
+            font-weight: 700;
+        }
+        .not-time {
+            font-size: 11px;
+            color: var(--secondary-text);
+            margin-top: 4px;
+            display: block;
+        }
+        .not-type-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            color: var(--primary-color);
+            font-size: 16px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--secondary-text);
+        }
+        .empty-state i {
+            font-size: 60px;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+        .loading-notifications {
+            text-align: center;
+            padding: 50px;
+            color: var(--secondary-text);
+        }
+        .loading-notifications i {
+            font-size: 30px;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        .mark-all-read {
+            position: sticky;
+            top: 60px;
+            background: white;
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+        .mark-all-read button {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <img src="images/logo.png" alt="Aulo" onclick="location.href='main.html'">
+        </div>
+        <div style="font-weight: bold;">الإشعارات</div>
+        <div class="header-actions" style="width: 35px;"></div>
+    </header>
+
+    <main class="container" style="padding-top: 60px; padding-bottom: 80px;">
+        <div id="mark-all-container" class="mark-all-read" style="display: none;">
+            <span>جميع الإشعارات</span>
+            <button id="mark-all-btn" onclick="markAllAsRead()">تحديد الكل كمقروء</button>
+        </div>
+
+        <div id="loading-notifications" class="loading-notifications">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            <p>جاري تحميل الإشعارات...</p>
+        </div>
+
+        <div id="notifications-container" class="notifications-list" style="display: none;"></div>
+
+        <div id="empty-state" class="empty-state" style="display: none;">
+            <i class="fa-regular fa-bell-slash"></i>
+            <p>لا توجد إشعارات</p>
+            <small>عندما يتفاعل معك أحدهم، ستظهر الإشعارات هنا</small>
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="main.html" class="nav-item"><i class="fa-solid fa-house"></i></a>
+        <a href="find.html" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i></a>
+        <a href="post.html" class="nav-item"><i class="fa-solid fa-plus-square"></i></a>
+        <a href="chatmain.html" class="nav-item"><i class="fa-solid fa-paper-plane"></i></a>
+        <a href="myprofile.html" class="nav-item"><i class="fa-solid fa-user"></i></a>
+    </nav>
+
+    <div id="msg" class="snackbar"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
+    <script src="js/ui.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZj9QplNw-VmwSl8Ijv_b6nIi4ghcHDms",
+            authDomain: "aulobylemmouchi.firebaseapp.com",
+            databaseURL: "https://aulobylemmouchi-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "aulobylemmouchi",
+            storageBucket: "aulobylemmouchi.firebasestorage.app",
+            messagingSenderId: "63959796567",
+            appId: "1:63959796567:web:5cb2b14ca64cc01b6d4c12"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        let currentUser = null;
+        let notificationsListener = null;
+        let notificationsCache = new Map();
+
+        const loadingDiv = document.getElementById('loading-notifications');
+        const container = document.getElementById('notifications-container');
+        const emptyState = document.getElementById('empty-state');
+        const markAllContainer = document.getElementById('mark-all-container');
+
+        function formatTimeAgo(timestamp) {
+            if (!timestamp) return '';
+            
+            const now = Date.now();
+            const diff = now - timestamp;
+            
+            const seconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+            
+            if (days > 0) {
+                if (days === 1) return 'منذ يوم';
+                if (days === 2) return 'منذ يومين';
+                if (days < 11) return `منذ ${days} أيام`;
+                return `منذ ${days} يوم`;
+            }
+            if (hours > 0) {
+                if (hours === 1) return 'منذ ساعة';
+                if (hours === 2) return 'منذ ساعتين';
+                if (hours < 11) return `منذ ${hours} ساعات`;
+                return `منذ ${hours} ساعة`;
+            }
+            if (minutes > 0) {
+                if (minutes === 1) return 'منذ دقيقة';
+                if (minutes === 2) return 'منذ دقيقتين';
+                if (minutes < 11) return `منذ ${minutes} دقائق`;
+                return `منذ ${minutes} دقيقة`;
+            }
+            return 'الآن';
+        }
+
+        function getNotificationText(type, userName) {
+            switch(type) {
+                case 'like': return `أعجب بمنشورك`;
+                case 'comment': return `علق على منشورك`;
+                case 'follow': return `بدأ بمتابعتك`;
+                case 'chat': return `أرسل لك رسالة`;
+                default: return `تفاعل معك`;
+            }
+        }
+
+        function getNotificationIcon(type) {
+            switch(type) {
+                case 'like': return 'fa-heart';
+                case 'comment': return 'fa-comment';
+                case 'follow': return 'fa-user-plus';
+                case 'chat': return 'fa-paper-plane';
+                default: return 'fa-bell';
+            }
+        }
+
+        function getNotificationLink(notification) {
+            switch(notification.type) {
+                case 'like':
+                case 'comment':
+                    return `main.html?post=${notification.postId}`;
+                case 'follow':
+                    return `profile.html?id=${notification.userId}`;
+                case 'chat':
+                    return `chat.html?id=${notification.userId}`;
+                default:
+                    return '#';
+            }
+        }
+
+        async function getUserData(userId) {
+            if (notificationsCache.has(userId)) {
+                return notificationsCache.get(userId);
+            }
+
+            try {
+                const snapshot = await database.ref(`users/${userId}`).once('value');
+                const userData = snapshot.val();
+                notificationsCache.set(userId, userData);
+                return userData;
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                return null;
+            }
+        }
+
+        async function createNotificationElement(notification) {
+            const notId = notification.id;
+            const userData = await getUserData(notification.userId);
+            
+            if (!userData) return null;
+
+            const div = document.createElement('a');
+            div.href = getNotificationLink(notification);
+            div.className = `not-item ${notification.read ? '' : 'unread'}`;
+            div.dataset.id = notId;
+
+            const timeAgo = formatTimeAgo(notification.timestamp);
+            const icon = getNotificationIcon(notification.type);
+            const text = getNotificationText(notification.type, userData.displayName || userData.username);
+
+            div.innerHTML = `
+                <img src="${userData.avatar || 'images/profile.png'}" class="not-avatar" loading="lazy">
+                <div class="not-content">
+                    <b>${userData.displayName || userData.username}</b> ${text}
+                    <span class="not-time">${timeAgo}</span>
+                </div>
+                <div class="not-type-icon">
+                    <i class="fa-solid ${icon}"></i>
+                </div>
+                <span class="delete-not" onclick="deleteNotification('${notId}', event)" style="position: absolute; left: 10px; top: 10px; color: var(--secondary-text); font-size: 12px; opacity: 0.5;">
+                    <i class="fa-regular fa-trash-can"></i>
+                </span>
+            `;
+
+            if (!notification.read) {
+                div.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    try {
+                        await database.ref(`notifications/${currentUser.uid}/${notId}`).update({
+                            read: true
+                        });
+                        window.location.href = div.href;
+                    } catch (error) {
+                        console.error('Error marking notification as read:', error);
+                    }
+                });
+            }
+
+            return div;
+        }
+
+        window.deleteNotification = async (notId, event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const confirmed = await Aulo.confirm('هل تريد حذف هذا الإشعار؟');
+            if (!confirmed) return;
+
+            try {
+                await database.ref(`notifications/${currentUser.uid}/${notId}`).remove();
+                Aulo.snackbar('تم حذف الإشعار', { type: 'success' });
+            } catch (error) {
+                console.error('Error deleting notification:', error);
+                Aulo.snackbar('خطأ في حذف الإشعار', { type: 'error' });
+            }
+        };
+
+        async function updateNotificationDot() {
+            try {
+                const snapshot = await database.ref(`notifications/${currentUser.uid}`)
+                    .orderByChild('read')
+                    .equalTo(false)
+                    .limitToFirst(1)
+                    .once('value');
+                
+                const dots = document.querySelectorAll('.not-dot');
+                dots.forEach(dot => {
+                    dot.style.display = snapshot.exists() ? 'block' : 'none';
+                });
+            } catch (error) {
+                console.error('Error updating notification dot:', error);
+            }
+        }
+
+        window.markAllAsRead = async () => {
+            try {
+                const snapshot = await database.ref(`notifications/${currentUser.uid}`)
+                    .orderByChild('read')
+                    .equalTo(false)
+                    .once('value');
+
+                const updates = {};
+                snapshot.forEach((child) => {
+                    updates[`notifications/${currentUser.uid}/${child.key}/read`] = true;
+                });
+
+                if (Object.keys(updates).length > 0) {
+                    await database.ref().update(updates);
+                    Aulo.snackbar('تم تحديد الكل كمقروء', { type: 'success' });
+                }
+            } catch (error) {
+                console.error('Error marking all as read:', error);
+                Aulo.snackbar('خطأ في تحديث الإشعارات', { type: 'error' });
+            }
+        };
+
+        function loadNotifications() {
+            if (!currentUser) return;
+
+            if (notificationsListener) {
+                database.ref(`notifications/${currentUser.uid}`).off('value', notificationsListener);
+            }
+
+            notificationsListener = database.ref(`notifications/${currentUser.uid}`)
+                .orderByChild('timestamp')
+                .limitToLast(50)
+                .on('value', async (snapshot) => {
+                    
+                    loadingDiv.style.display = 'none';
+
+                    const notifications = [];
+                    snapshot.forEach((child) => {
+                        notifications.push({ id: child.key, ...child.val() });
+                    });
+
+                    notifications.reverse();
+
+                    if (notifications.length === 0) {
+                        container.style.display = 'none';
+                        markAllContainer.style.display = 'none';
+                        emptyState.style.display = 'block';
+                        return;
+                    }
+
+                    emptyState.style.display = 'none';
+                    container.style.display = 'block';
+                    container.innerHTML = '';
+
+                    for (const notification of notifications) {
+                        const element = await createNotificationElement(notification);
+                        if (element) {
+                            container.appendChild(element);
+                        }
+                    }
+
+                    const unreadCount = notifications.filter(n => !n.read).length;
+                    markAllContainer.style.display = unreadCount > 0 ? 'flex' : 'none';
+                    
+                    updateNotificationDot();
+                });
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (notificationsListener && currentUser) {
+                database.ref(`notifications/${currentUser.uid}`).off('value', notificationsListener);
+            }
+        });
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                loadNotifications();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>

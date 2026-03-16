@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aulo - الإخلاء القانوني</title>
+    <link rel="icon" type="image/png" href="images/l.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .legal-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 15px 80px 15px;
+        }
+        
+        .legal-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .legal-header h1 {
+            font-size: 28px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .legal-header .date {
+            color: var(--secondary-text);
+            font-size: 14px;
+        }
+        
+        .legal-section {
+            margin-bottom: 30px;
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .legal-section h2 {
+            font-size: 20px;
+            color: var(--text-color);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .legal-section p {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #444;
+            margin-bottom: 15px;
+        }
+        
+        .legal-section ul {
+            margin-right: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .legal-section li {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #444;
+            margin-bottom: 5px;
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .back-btn:hover {
+            text-decoration: underline;
+        }
+        
+        .contact-info {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <img src="images/logo.png" alt="Aulo" onclick="location.href='index.html'">
+        </div>
+        <div style="font-weight: bold;">الإخلاء القانوني</div>
+        <div class="header-actions" onclick="window.close()" style="cursor: pointer;">
+            <i class="fa-solid fa-xmark" style="font-size: 24px; color: var(--secondary-text);"></i>
+        </div>
+    </header>
+
+    <main class="legal-container">
+        
+        <a href="javascript:history.back()" class="back-btn">
+            <i class="fa-solid fa-arrow-right"></i>
+            العودة
+        </a>
+        
+        <div class="legal-header">
+            <h1>الإخلاء القانوني</h1>
+            <div class="date">آخر تحديث: 15 مارس 2024</div>
+        </div>
+        
+        <div class="legal-section">
+            <h2>مسؤولية المحتوى</h2>
+            <p>المستخدم هو المسؤول الوحيد عن المنشورات والمحتوى الذي ينشره على التطبيق. لا نتحمل مسؤولية أي محتوى ينشره المستخدمون.</p>
+        </div>
+        
+        <div class="legal-section">
+            <h2>المحتوى غير اللائق</h2>
+            <p>يمنع نشر أي محتوى غير لائق أو مسيء أو مخالف للقانون. نحتفظ بالحق في حذف أي محتوى أو تعليق أي حساب ينتهك هذه القواعد.</p>
+        </div>
+        
+        <div class="legal-section">
+            <h2>تفاعلات المستخدمين</h2>
+            <p>لا نتحمل مسؤولية أي تفاعلات أو نزاعات تنشأ بين المستخدمين. المستخدمون مسؤولون عن تفاعلاتهم مع بعضهم البعض.</p>
+        </div>
+        
+        <div class="legal-section">
+            <h2>الروابط الخارجية</h2>
+            <p>قد تحتوي المنشورات على روابط لمواقع خارجية. لا نتحكم في هذه المواقع ولا نتحمل مسؤولية محتواها.</p>
+        </div>
+        
+        <div class="legal-section">
+            <h2>توفر الخدمة</h2>
+            <p>نبذل قصارى جهدنا للحفاظ على تشغيل التطبيق، ولكن لا نضمن أن الخدمة ستكون متاحة دون انقطاع.</p>
+        </div>
+        
+        <div class="legal-section">
+            <h2>الاتصال</h2>
+            <div class="contact-info">
+                <p>للتواصل بخصوص أي استفسار قانوني:</p>
+                <p><i class="fa-regular fa-envelope" style="color: var(--primary-color);"></i> lemmouchikarimecn@gmail.com</p>
+            </div>
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="main.html" class="nav-item"><i class="fa-solid fa-house"></i></a>
+        <a href="find.html" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i></a>
+        <a href="post.html" class="nav-item"><i class="fa-solid fa-plus-square"></i></a>
+        <a href="chatmain.html" class="nav-item"><i class="fa-solid fa-paper-plane"></i></a>
+        <a href="myprofile.html" class="nav-item"><i class="fa-solid fa-user"></i></a>
+    </nav>
+
+    <script src="js/ui.js"></script>
+</body>
+</html>

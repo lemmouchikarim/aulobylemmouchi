@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <link rel="icon" type="image/png" href="images/l.png">
+    <link rel="stylesheet" href="css/style.css">
+	<!-- أيقونات بأحجام مختلفة -->
+	<link rel="icon" type="image/png" sizes="16x16" href="images/l.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="images/l.png">
+	<link rel="apple-touch-icon" href="images/l.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aulo - المحادثات</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .chats-container {
+            display: flex;
+            flex-direction: column;
+            margin-top: 10px;
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.2s;
+            position: relative;
+        }
+
+        .chat-item:active {
+            background: #f9f9f9;
+        }
+
+        .chat-avatar {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-left: 15px;
+            background: var(--skeleton-bg);
+            border: 2px solid var(--border-color);
+        }
+
+        .chat-info {
+            flex: 1;
+        }
+
+        .chat-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .chat-name {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text-color);
+        }
+
+        .chat-time {
+            font-size: 11px;
+            color: var(--secondary-text);
+        }
+
+        .chat-last-message {
+            font-size: 13px;
+            color: var(--secondary-text);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .chat-last-message i {
+            font-size: 12px;
+            color: var(--primary-color);
+        }
+
+        .unread-badge {
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            min-width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            margin-right: 10px;
+            padding: 0 5px;
+        }
+
+        .online-indicator {
+            position: absolute;
+            bottom: 15px;
+            right: 60px;
+            width: 12px;
+            height: 12px;
+            background: #4caf50;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .empty-chats {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--secondary-text);
+        }
+
+        .empty-chats i {
+            font-size: 60px;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        .skeleton-chat {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .skeleton-avatar {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: var(--skeleton-bg);
+            margin-left: 15px;
+        }
+
+        .skeleton-line {
+            height: 12px;
+            background: var(--skeleton-bg);
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .skeleton-line.short {
+            width: 60%;
+        }
+
+        .search-bar {
+            position: sticky;
+            top: 60px;
+            background: white;
+            padding: 10px 15px;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-input {
+            background: #f1f1f1;
+            border: none;
+            border-radius: 20px;
+            padding: 12px 40px 12px 15px;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary-text);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <img src="images/logo.png" alt="Aulo" onclick="location.href='main.html'">
+        </div>
+        <div style="font-weight: bold;">المحادثات</div>
+        <div style="width: 35px;"></div>
+    </header>
+
+    <main class="container" style="padding-top: 60px; padding-bottom: 80px;">
+        <div class="search-bar">
+            <div style="position: relative;">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="search-chats" class="search-input" placeholder="بحث في المحادثات...">
+            </div>
+        </div>
+
+        <div id="chats-list" class="chats-container">
+            <div class="skeleton-chat">
+                <div class="skeleton-avatar"></div>
+                <div style="flex: 1;">
+                    <div class="skeleton-line" style="width: 40%;"></div>
+                    <div class="skeleton-line short"></div>
+                </div>
+            </div>
+            <div class="skeleton-chat">
+                <div class="skeleton-avatar"></div>
+                <div style="flex: 1;">
+                    <div class="skeleton-line" style="width: 40%;"></div>
+                    <div class="skeleton-line short"></div>
+                </div>
+            </div>
+            <div class="skeleton-chat">
+                <div class="skeleton-avatar"></div>
+                <div style="flex: 1;">
+                    <div class="skeleton-line" style="width: 40%;"></div>
+                    <div class="skeleton-line short"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="empty-chats" class="empty-chats" style="display: none;">
+            <i class="fa-regular fa-message"></i>
+            <p>لا توجد محادثات بعد</p>
+            <p style="font-size: 14px;">ابحث عن أصدقاء وابدأ محادثة جديدة</p>
+            <a href="find.html" class="btn-primary">البحث عن أصدقاء</a>
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="main.html" class="nav-item"><i class="fa-solid fa-house"></i></a>
+        <a href="find.html" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i></a>
+        <a href="post.html" class="nav-item"><i class="fa-solid fa-plus-square"></i></a>
+        <a href="chatmain.html" class="nav-item active"><i class="fa-solid fa-paper-plane"></i></a>
+        <a href="myprofile.html" class="nav-item"><i class="fa-solid fa-user"></i></a>
+    </nav>
+
+    <div id="msg" class="snackbar"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
+    <script src="js/ui.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZj9QplNw-VmwSl8Ijv_b6nIi4ghcHDms",
+            authDomain: "aulobylemmouchi.firebaseapp.com",
+            databaseURL: "https://aulobylemmouchi-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "aulobylemmouchi",
+            storageBucket: "aulobylemmouchi.firebasestorage.app",
+            messagingSenderId: "63959796567",
+            appId: "1:63959796567:web:5cb2b14ca64cc01b6d4c12"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        let currentUser = null;
+        let chatsListener = null;
+        let allChats = [];
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '';
+            
+            const now = Date.now();
+            const diff = now - timestamp;
+            
+            if (diff < 60000) return 'الآن';
+            if (diff < 3600000) return `منذ ${Math.floor(diff / 60000)} د`;
+            if (diff < 86400000) return `منذ ${Math.floor(diff / 3600000)} س`;
+            if (diff < 604800000) return `منذ ${Math.floor(diff / 86400000)} ي`;
+            
+            const date = new Date(timestamp);
+            return `${date.getDate()}/${date.getMonth() + 1}`;
+        }
+
+        function getMessagePreview(message) {
+            if (!message) return 'بداية محادثة جديدة';
+            
+            switch (message.type) {
+                case 'text':
+                    return message.content.length > 30 ? message.content.substring(0, 30) + '...' : message.content;
+                case 'image':
+                    return '📷 صورة';
+                case 'video':
+                    return '🎥 فيديو';
+                case 'audio':
+                    return '🎤 تسجيل صوتي';
+                default:
+                    return 'رسالة جديدة';
+            }
+        }
+
+        function loadChats() {
+            if (!currentUser) return;
+
+            const chatsList = document.getElementById('chats-list');
+            const emptyChats = document.getElementById('empty-chats');
+
+            if (chatsListener) {
+                database.ref('chats').off('value', chatsListener);
+            }
+
+            chatsListener = database.ref('chats')
+                .orderByChild(`participants/${currentUser.uid}`)
+                .equalTo(true)
+                .on('value', async (snapshot) => {
+                    
+                    const chats = [];
+                    
+                    snapshot.forEach((child) => {
+                        chats.push({ id: child.key, ...child.val() });
+                    });
+
+                    chats.sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
+                    allChats = chats;
+
+                    if (chats.length === 0) {
+                        chatsList.innerHTML = '';
+                        emptyChats.style.display = 'block';
+                        return;
+                    }
+
+                    emptyChats.style.display = 'none';
+                    chatsList.innerHTML = '';
+
+                    for (const chat of chats) {
+                        const otherUserId = Object.keys(chat.participants).find(id => id !== currentUser.uid);
+                        
+                        if (!otherUserId) continue;
+
+                        try {
+                            const userSnapshot = await database.ref(`users/${otherUserId}`).once('value');
+                            const userData = userSnapshot.val();
+
+                            if (!userData) continue;
+
+                            const unreadSnapshot = await database.ref(`messages/${chat.id}`)
+                                .orderByChild('read')
+                                .equalTo(false)
+                                .once('value');
+                            
+                            let unreadCount = 0;
+                            unreadSnapshot.forEach((msg) => {
+                                if (msg.val().senderId !== currentUser.uid) unreadCount++;
+                            });
+
+                            const lastMessageSnapshot = await database.ref(`messages/${chat.id}`)
+                                .orderByChild('timestamp')
+                                .limitToLast(1)
+                                .once('value');
+                            
+                            let lastMessage = null;
+                            lastMessageSnapshot.forEach((msg) => {
+                                lastMessage = msg.val();
+                            });
+
+                            const chatElement = createChatElement(chat, userData, otherUserId, unreadCount, lastMessage);
+                            chatsList.appendChild(chatElement);
+
+                        } catch (error) {
+                            console.error('Error loading user data:', error);
+                        }
+                    }
+                });
+        }
+
+        function createChatElement(chat, userData, otherUserId, unreadCount, lastMessage) {
+            const div = document.createElement('a');
+            div.href = `chat.html?id=${otherUserId}`;
+            div.className = 'chat-item';
+
+            const isOnline = userData.online || false;
+            const messagePreview = getMessagePreview(lastMessage);
+
+            div.innerHTML = `
+                <img src="${userData.avatar || 'images/profile.png'}" class="chat-avatar">
+                ${isOnline ? '<span class="online-indicator"></span>' : ''}
+                <div class="chat-info">
+                    <div class="chat-top">
+                        <span class="chat-name">${userData.displayName || userData.username || 'مستخدم'}</span>
+                        <span class="chat-time">${formatTime(chat.lastMessageTime)}</span>
+                    </div>
+                    <div class="chat-last-message">
+                        ${lastMessage && lastMessage.senderId === currentUser.uid ? '<i class="fa-solid fa-check"></i>' : ''}
+                        <span>${messagePreview}</span>
+                    </div>
+                </div>
+                ${unreadCount > 0 ? `<div class="unread-badge">${unreadCount}</div>` : ''}
+            `;
+
+            return div;
+        }
+
+        document.getElementById('search-chats').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const chatsList = document.getElementById('chats-list');
+            
+            if (query.length < 2) {
+                loadChats();
+                return;
+            }
+
+            const chatItems = chatsList.querySelectorAll('.chat-item');
+            chatItems.forEach(item => {
+                const name = item.querySelector('.chat-name').textContent.toLowerCase();
+                item.style.display = name.includes(query) ? 'flex' : 'none';
+            });
+        });
+
+        function setupPresence() {
+            if (!currentUser) return;
+
+            const userStatusRef = database.ref(`users/${currentUser.uid}`);
+            
+            userStatusRef.update({
+                online: true,
+                lastSeen: Date.now()
+            });
+
+            userStatusRef.onDisconnect().update({
+                online: false,
+                lastSeen: Date.now()
+            });
+        }
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                setupPresence();
+                loadChats();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (chatsListener && currentUser) {
+                database.ref('chats').off('value', chatsListener);
+            }
+        });
+    </script>
+</body>
+</html>

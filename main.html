@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <link rel="icon" type="image/png" href="images/l.png">
+    <link rel="stylesheet" href="css/style.css">
+	<!-- أيقونات بأحجام مختلفة -->
+	<link rel="icon" type="image/png" sizes="16x16" href="images/l.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="images/l.png">
+	<link rel="apple-touch-icon" href="images/l.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aulo - الرئيسية</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <img src="images/logo.png" alt="Aulo" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        </div>
+        <div class="header-actions">
+            <a href="not.html" class="not-icon">
+                <i class="fa-regular fa-bell" style="font-size: 22px; color: var(--text-color);"></i>
+                <div id="not-dot" class="not-dot" style="display: none;"></div>
+            </a>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="feed" class="feed-container">
+            <div class="post-card skeleton-card">
+                <div class="post-header">
+                    <div class="skeleton skeleton-avatar"></div>
+                    <div class="post-info">
+                        <div class="skeleton skeleton-text" style="width: 100px;"></div>
+                        <div class="skeleton skeleton-text" style="width: 60px;"></div>
+                    </div>
+                </div>
+                <div class="skeleton skeleton-media"></div>
+            </div>
+        </div>
+
+        <div id="load-more-trigger" style="height: 20px;"></div>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="main.html" class="nav-item active"><i class="fa-solid fa-house"></i></a>
+        <a href="find.html" class="nav-item"><i class="fa-solid fa-magnifying-glass"></i></a>
+        <a href="post.html" class="nav-item"><i class="fa-solid fa-plus-square"></i></a>
+        <a href="chatmain.html" class="nav-item"><i class="fa-solid fa-paper-plane"></i></a>
+        <a href="myprofile.html" class="nav-item"><i class="fa-solid fa-user"></i></a>
+    </nav>
+
+    <div id="msg" class="snackbar"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
+    <script src="js/ui.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZj9QplNw-VmwSl8Ijv_b6nIi4ghcHDms",
+            authDomain: "aulobylemmouchi.firebaseapp.com",
+            databaseURL: "https://aulobylemmouchi-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "aulobylemmouchi",
+            storageBucket: "aulobylemmouchi.firebasestorage.app",
+            messagingSenderId: "63959796567",
+            appId: "1:63959796567:web:5cb2b14ca64cc01b6d4c12"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        let currentUser = null;
+        let lastPostTime = Date.now();
+        let loading = false;
+        let allPostsLoaded = false;
+        const POSTS_PER_PAGE = 5;
+
+        function formatDate(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        async function loadPosts(loadMore = false) {
+            if (loading || allPostsLoaded) return;
+            
+            loading = true;
+            const feed = document.getElementById('feed');
+            
+            if (!loadMore) {
+                feed.innerHTML = generateSkeletonCards(3);
+                lastPostTime = Date.now();
+            }
+            
+            try {
+                const postsRef = database.ref('posts')
+                    .orderByChild('timestamp')
+                    .endAt(lastPostTime)
+                    .limitToLast(POSTS_PER_PAGE + 1);
+                
+                const snapshot = await postsRef.once('value');
+                const posts = [];
+                
+                snapshot.forEach((child) => {
+                    posts.push({ id: child.key, ...child.val() });
+                });
+                
+                posts.reverse();
+                
+                if (posts.length <= POSTS_PER_PAGE) {
+                    allPostsLoaded = true;
+                } else {
+                    posts.pop();
+                    lastPostTime = posts[posts.length - 1].timestamp;
+                }
+                
+                if (!loadMore) {
+                    feed.innerHTML = '';
+                }
+                
+                if (posts.length === 0 && !loadMore) {
+                    feed.innerHTML = '<div style="text-align: center; padding: 50px;"><i class="fa-regular fa-newspaper"></i><p>لا توجد منشورات بعد</p></div>';
+                    loading = false;
+                    return;
+                }
+                
+                for (const post of posts) {
+                    const userData = await getUserData(post.userId);
+                    const isLiked = await checkIfLiked(post.id);
+                    feed.appendChild(createPostElement(post, userData, isLiked));
+                }
+                
+            } catch (error) {
+                console.error('Error loading posts:', error);
+                if (!loadMore) {
+                    feed.innerHTML = '<div style="text-align: center; padding: 50px;"><i class="fa-solid fa-circle-exclamation"></i><p>خطأ في تحميل المنشورات</p><button onclick="location.reload()" style="background: var(--primary-color); color: white; border: none; padding: 8px 20px; border-radius: 20px; margin-top: 10px;">إعادة المحاولة</button></div>';
+                }
+            } finally {
+                loading = false;
+            }
+        }
+
+        async function getUserData(userId) {
+            try {
+                const snapshot = await database.ref(`users/${userId}`).once('value');
+                return snapshot.val() || {};
+            } catch (error) {
+                return {};
+            }
+        }
+
+        async function checkIfLiked(postId) {
+            if (!currentUser) return false;
+            try {
+                const snapshot = await database.ref(`likes/${postId}/${currentUser.uid}`).once('value');
+                return snapshot.exists();
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function createPostElement(post, userData, isLiked = false) {
+            const postCard = document.createElement('div');
+            postCard.className = 'post-card';
+            
+            const contentHTML = post.text ? `<div class="post-content">${post.text}</div>` : '';
+            
+            let mediaHTML = '';
+            if (post.media && post.media.length > 0) {
+                const gridClass = `media-grid-${Math.min(post.media.length, 5)}`;
+                mediaHTML = `<div class="post-media-container ${gridClass}">`;
+                post.media.forEach(media => {
+                    if (media.type === 'image') {
+                        mediaHTML += `<img src="${media.url}" alt="صورة" loading="lazy">`;
+                    } else if (media.type === 'video') {
+                        mediaHTML += `<video src="${media.url}" controls></video>`;
+                    }
+                });
+                mediaHTML += '</div>';
+            }
+            
+            const likeClass = isLiked ? 'active' : '';
+            
+            postCard.innerHTML = `
+                <div class="post-header" onclick="location.href='profile.html?id=${post.userId}'">
+                    <img src="${userData.avatar || 'images/profile.png'}" class="user-avatar">
+                    <div class="post-info">
+                        <span class="display-name">${userData.displayName || userData.username || 'مستخدم'}</span>
+                        <span class="post-time">${formatDate(post.timestamp)}</span>
+                    </div>
+                </div>
+                ${contentHTML}
+                ${mediaHTML}
+                <div class="post-actions">
+                    <button class="like-btn ${likeClass}" onclick="toggleLike('${post.id}', this)">
+                        <i class="fa-${isLiked ? 'solid' : 'regular'} fa-heart"></i>
+                    </button>
+                    <span class="like-count">${post.likes || 0}</span>
+                </div>
+            `;
+            
+            return postCard;
+        }
+
+        window.toggleLike = async (postId, btn) => {
+            if (!currentUser) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            try {
+                const likeRef = database.ref(`likes/${postId}/${currentUser.uid}`);
+                const snapshot = await likeRef.once('value');
+                const postRef = database.ref(`posts/${postId}`);
+                const postSnapshot = await postRef.once('value');
+                const post = postSnapshot.val();
+                
+                if (snapshot.exists()) {
+                    await likeRef.remove();
+                    await postRef.update({ likes: (post.likes || 1) - 1 });
+                    btn.classList.remove('active');
+                    btn.querySelector('i').className = 'fa-regular fa-heart';
+                } else {
+                    await likeRef.set({ userId: currentUser.uid, timestamp: Date.now() });
+                    await postRef.update({ likes: (post.likes || 0) + 1 });
+                    btn.classList.add('active');
+                    btn.querySelector('i').className = 'fa-solid fa-heart';
+                    
+                    if (post.userId !== currentUser.uid) {
+                        await database.ref(`notifications/${post.userId}`).push({
+                            type: 'like',
+                            postId: postId,
+                            userId: currentUser.uid,
+                            timestamp: Date.now(),
+                            read: false
+                        });
+                    }
+                }
+                
+                const likeCountSpan = btn.nextElementSibling;
+                likeCountSpan.textContent = parseInt(likeCountSpan.textContent) + (snapshot.exists() ? -1 : 1);
+                
+            } catch (error) {
+                console.error('Error toggling like:', error);
+            }
+        };
+
+        function generateSkeletonCards(count) {
+            let html = '';
+            for (let i = 0; i < count; i++) {
+                html += `
+                    <div class="post-card skeleton-card">
+                        <div class="post-header">
+                            <div class="skeleton skeleton-avatar"></div>
+                            <div class="post-info">
+                                <div class="skeleton skeleton-text" style="width: 100px;"></div>
+                                <div class="skeleton skeleton-text" style="width: 60px;"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton skeleton-media"></div>
+                    </div>
+                `;
+            }
+            return html;
+        }
+
+        window.addEventListener('scroll', () => {
+            const trigger = document.getElementById('load-more-trigger');
+            if (!trigger) return;
+            
+            const rect = trigger.getBoundingClientRect();
+            if (rect.top <= window.innerHeight && !loading && !allPostsLoaded) {
+                loadPosts(true);
+            }
+        });
+
+        async function updateNotificationDot() {
+            if (!currentUser) return;
+            try {
+                const snapshot = await database.ref(`notifications/${currentUser.uid}`)
+                    .orderByChild('read')
+                    .equalTo(false)
+                    .limitToFirst(1)
+                    .once('value');
+                
+                const dot = document.getElementById('not-dot');
+                if (dot) {
+                    dot.style.display = snapshot.exists() ? 'block' : 'none';
+                }
+            } catch (error) {
+                console.error('Error checking notifications:', error);
+            }
+        }
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                loadPosts(false);
+                updateNotificationDot();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>

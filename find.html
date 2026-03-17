@@ -2,48 +2,121 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aulo - البحث</title>
+    
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://aulobylemmouchi-default-rtdb.europe-west1.firebasedatabase.app">
+    <link rel="preconnect" href="https://www.gstatic.com">
+    
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="images/l.png">
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Font Awesome متأخر -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
+    
     <style>
+        :root {
+            --primary-color: #a018cb;
+            --text-color: #1a1a1a;
+            --secondary-text: #757575;
+            --border-color: #f0f0f0;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            direction: rtl;
+        }
+        
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 60px;
+            background: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 100;
+        }
+        
+        .logo-container img { height: 35px; cursor: pointer; }
+        
+        .container {
+            padding: 70px 15px 80px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 60px;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            color: var(--secondary-text);
+            font-size: 24px;
+            text-decoration: none;
+        }
+        
+        .nav-item.active { color: var(--primary-color); }
+        
         .search-wrapper {
             position: sticky;
             top: 60px;
-            background: #fff;
+            background: white;
             padding: 15px 0;
-            z-index: 100;
+            z-index: 99;
         }
+        
         .search-input-container {
             position: relative;
             display: flex;
             align-items: center;
         }
+        
         .search-input-container i {
             position: absolute;
             right: 15px;
             color: var(--secondary-text);
         }
+        
         #user-search {
-            padding-right: 40px;
+            width: 100%;
+            padding: 12px 40px 12px 15px;
             border-radius: 25px;
             background: #f1f1f1;
             border: none;
-            height: 45px;
             font-size: 16px;
-            width: 100%;
+            font-family: inherit;
         }
+        
         #user-search:focus {
             outline: none;
             border: 2px solid var(--primary-color);
             background: white;
         }
+        
         .results-container {
-            margin-top: 10px;
             display: flex;
             flex-direction: column;
+            margin-top: 10px;
         }
+        
         .user-result-item {
             display: flex;
             align-items: center;
@@ -53,78 +126,69 @@
             color: inherit;
             transition: background 0.2s;
         }
-        .user-result-item:active {
-            background: #f9f9f9;
-        }
+        
+        .user-result-item:active { background: #f9f9f9; }
+        
         .result-avatar {
             width: 50px;
             height: 50px;
             border-radius: 50%;
             object-fit: cover;
             margin-left: 15px;
-            background: var(--skeleton-bg);
+            background: var(--border-color);
         }
-        .result-info {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-        }
+        
+        .result-info { flex: 1; }
+        
         .result-display-name {
             font-weight: 700;
             font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            display: block;
         }
+        
         .result-username {
             font-size: 13px;
             color: var(--secondary-text);
         }
-        .result-bio {
-            font-size: 12px;
-            color: var(--secondary-text);
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 200px;
-        }
+        
         .no-results {
             text-align: center;
-            margin-top: 50px;
+            padding: 50px 20px;
             color: var(--secondary-text);
         }
+        
         .no-results i {
             font-size: 50px;
             margin-bottom: 15px;
             opacity: 0.3;
         }
+        
         .search-hint {
             text-align: center;
             margin-top: 30px;
             color: var(--secondary-text);
-            font-size: 14px;
         }
-        .search-hint i {
-            color: var(--primary-color);
-            margin-left: 5px;
-        }
+        
         .loading-spinner {
             text-align: center;
-            margin-top: 20px;
+            padding: 20px;
         }
+        
         .loading-spinner i {
             color: var(--primary-color);
             font-size: 24px;
         }
+        
         .recent-searches {
             margin-top: 20px;
         }
+        
         .recent-title {
             font-size: 14px;
             color: var(--secondary-text);
             margin-bottom: 10px;
         }
+        
         .recent-item {
             display: inline-block;
             background: #f1f1f1;
@@ -135,23 +199,25 @@
             font-size: 13px;
             cursor: pointer;
         }
-        .recent-item:hover {
-            background: #e1e1e1;
-        }
         
-        /* شارة المحظور */
-        .blocked-badge {
-            background: var(--error-color);
+        .recent-item:hover { background: #e1e1e1; }
+        
+        .snackbar {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
             color: white;
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 12px;
-            margin-right: 5px;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 14px;
+            display: none;
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
-
     <header>
         <div class="logo-container">
             <img src="images/logo.png" alt="Aulo" onclick="location.href='main.html'">
@@ -159,32 +225,31 @@
         <div style="font-weight: bold;">البحث</div>
         <div style="width: 35px;"></div>
     </header>
-
+    
     <main class="container">
         <div class="search-wrapper">
             <div class="search-input-container">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="user-search" placeholder="ابحث عن صديق بالاسم أو اليوزر..." autocomplete="off" dir="rtl">
+                <input type="text" id="user-search" placeholder="ابحث عن صديق..." autocomplete="off">
             </div>
         </div>
-
+        
         <div id="recent-searches" class="recent-searches" style="display: none;">
             <div class="recent-title">عمليات البحث الأخيرة</div>
             <div id="recent-list"></div>
         </div>
-
+        
         <div id="search-results" class="results-container"></div>
-
+        
         <div id="loading-spinner" class="loading-spinner" style="display: none;">
             <i class="fa-solid fa-circle-notch fa-spin"></i>
         </div>
-
+        
         <div id="search-hint" class="search-hint">
-            <i class="fa-regular fa-keyboard"></i>
-            اكتب حرفين على الأقل للبحث
+            <i class="fa-regular fa-keyboard"></i> اكتب حرفين على الأقل للبحث
         </div>
     </main>
-
+    
     <nav class="bottom-nav">
         <a href="main.html" class="nav-item"><i class="fa-solid fa-house"></i></a>
         <a href="find.html" class="nav-item active"><i class="fa-solid fa-magnifying-glass"></i></a>
@@ -192,67 +257,45 @@
         <a href="chatmain.html" class="nav-item"><i class="fa-solid fa-paper-plane"></i></a>
         <a href="myprofile.html" class="nav-item"><i class="fa-solid fa-user"></i></a>
     </nav>
-
-    <div id="msg" class="snackbar"></div>
-
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
-    <script src="js/ui.js"></script>
-
+    
+    <div id="snackbar" class="snackbar"></div>
+    
+    <!-- Firebase -->
+    <script defer src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
+    <script defer src="js/firebase-config.js"></script>
+    
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBZj9QplNw-VmwSl8Ijv_b6nIi4ghcHDms",
-            authDomain: "aulobylemmouchi.firebaseapp.com",
-            databaseURL: "https://aulobylemmouchi-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "aulobylemmouchi",
-            storageBucket: "aulobylemmouchi.firebasestorage.app",
-            messagingSenderId: "63959796567",
-            appId: "1:63959796567:web:5cb2b14ca64cc01b6d4c12"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const auth = firebase.auth();
-
         let currentUser = null;
         let cachedUsers = [];
         let blockedUsers = new Set();
-
+        let searchTimeout = null;
+        
         const searchInput = document.getElementById('user-search');
         const resultsContainer = document.getElementById('search-results');
         const loadingSpinner = document.getElementById('loading-spinner');
         const searchHint = document.getElementById('search-hint');
         const recentSearches = document.getElementById('recent-searches');
         const recentList = document.getElementById('recent-list');
-
-        // ==================== تحميل قائمة المحظورين ====================
-        async function loadBlockedUsers() {
-            if (!currentUser) return;
-            
-            try {
-                const snapshot = await database.ref(`blocked/${currentUser.uid}`).once('value');
-                blockedUsers.clear();
-                
-                snapshot.forEach((child) => {
-                    blockedUsers.add(child.key);
-                });
-                
-                console.log('Blocked users loaded for search:', Array.from(blockedUsers));
-                
-            } catch (error) {
-                console.error('Error loading blocked users:', error);
-            }
+        
+        function showMessage(text, isError = false) {
+            const msg = document.getElementById('snackbar');
+            msg.textContent = text;
+            msg.style.background = isError ? '#ff3b30' : '#333';
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 3000);
         }
-
+        
+        // تحميل جميع المستخدمين (مرة واحدة)
         async function loadAllUsers() {
             if (cachedUsers.length > 0) return cachedUsers;
-
+            
             try {
                 const snapshot = await database.ref('users').once('value');
                 const users = [];
                 
-                snapshot.forEach((child) => {
+                snapshot.forEach(child => {
                     const user = child.val();
                     if (user.uid !== currentUser?.uid) {
                         users.push(user);
@@ -266,15 +309,26 @@
                 return [];
             }
         }
-
+        
+        // تحميل المحظورين
+        async function loadBlockedUsers() {
+            if (!currentUser) return;
+            try {
+                const snapshot = await database.ref(`blocked/${currentUser.uid}`).once('value');
+                blockedUsers.clear();
+                snapshot.forEach(child => blockedUsers.add(child.key));
+            } catch (error) {
+                console.error('Error loading blocked users:', error);
+            }
+        }
+        
+        // البحث في المستخدمين
         function searchUsers(query) {
             if (!query || query.length < 2) return [];
-
+            
             query = query.toLowerCase().trim();
             
-            // فلترة: البحث في الاسم + استبعاد المحظورين
             return cachedUsers.filter(user => {
-                // استبعاد المحظورين
                 if (blockedUsers.has(user.uid)) return false;
                 
                 const username = (user.username || '').toLowerCase();
@@ -283,7 +337,8 @@
                 return username.includes(query) || displayName.includes(query);
             });
         }
-
+        
+        // عرض النتائج
         function displayResults(users) {
             resultsContainer.innerHTML = '';
             
@@ -291,35 +346,30 @@
                 resultsContainer.innerHTML = `
                     <div class="no-results">
                         <i class="fa-regular fa-face-frown"></i>
-                        <p>لا توجد نتائج مطابقة</p>
-                        <p style="font-size: 13px;">جرب كلمات بحث أخرى</p>
+                        <p>لا توجد نتائج</p>
                     </div>
                 `;
                 return;
             }
-
+            
             users.forEach(user => {
-                const resultItem = document.createElement('a');
-                resultItem.href = `profile.html?id=${user.uid}`;
-                resultItem.className = 'user-result-item';
+                const item = document.createElement('a');
+                item.href = `profile.html?id=${user.uid}`;
+                item.className = 'user-result-item';
                 
-                const bio = user.bio ? (user.bio.length > 30 ? user.bio.substring(0, 30) + '...' : user.bio) : '';
-                
-                resultItem.innerHTML = `
+                item.innerHTML = `
                     <img src="${user.avatar || 'images/profile.png'}" class="result-avatar" loading="lazy">
                     <div class="result-info">
-                        <span class="result-display-name">
-                            ${user.displayName || user.username}
-                        </span>
+                        <span class="result-display-name">${user.displayName || user.username}</span>
                         <span class="result-username">@${user.username}</span>
-                        ${bio ? `<span class="result-bio">${bio}</span>` : ''}
                     </div>
                 `;
                 
-                resultsContainer.appendChild(resultItem);
+                resultsContainer.appendChild(item);
             });
         }
-
+        
+        // حفظ البحث الأخير
         function saveRecentSearch(query) {
             let recents = JSON.parse(localStorage.getItem('recentSearches') || '[]');
             recents = recents.filter(q => q !== query);
@@ -328,7 +378,8 @@
             localStorage.setItem('recentSearches', JSON.stringify(recents));
             showRecentSearches();
         }
-
+        
+        // عرض البحوث الأخيرة
         function showRecentSearches() {
             const recents = JSON.parse(localStorage.getItem('recentSearches') || '[]');
             
@@ -336,86 +387,81 @@
                 recentSearches.style.display = 'none';
                 return;
             }
-
+            
             recentList.innerHTML = '';
             recents.forEach(query => {
-                const recentItem = document.createElement('span');
-                recentItem.className = 'recent-item';
-                recentItem.textContent = query;
-                recentItem.onclick = () => {
+                const item = document.createElement('span');
+                item.className = 'recent-item';
+                item.textContent = query;
+                item.onclick = () => {
                     searchInput.value = query;
                     performSearch(query);
                 };
-                recentList.appendChild(recentItem);
+                recentList.appendChild(item);
             });
-
+            
             recentSearches.style.display = 'block';
         }
-
+        
+        // تنفيذ البحث
         async function performSearch(query) {
             if (!query || query.length < 2) {
                 searchHint.style.display = 'block';
                 resultsContainer.innerHTML = '';
                 return;
             }
-
+            
             loadingSpinner.style.display = 'block';
             searchHint.style.display = 'none';
             recentSearches.style.display = 'none';
-
+            
             setTimeout(() => {
                 const results = searchUsers(query);
                 loadingSpinner.style.display = 'none';
                 displayResults(results);
-                
-                if (query.length >= 2) {
-                    saveRecentSearch(query);
-                }
+                if (query.length >= 2) saveRecentSearch(query);
             }, 300);
         }
-
-        let searchTimeout;
+        
+        // مستمع الإدخال
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim();
             
             if (searchTimeout) clearTimeout(searchTimeout);
-
+            
             if (query.length < 2) {
                 resultsContainer.innerHTML = '';
                 searchHint.style.display = 'block';
                 showRecentSearches();
                 return;
             }
-
-            searchTimeout = setTimeout(() => {
-                performSearch(query);
-            }, 500);
+            
+            searchTimeout = setTimeout(() => performSearch(query), 500);
         });
-
+        
         searchInput.addEventListener('focus', () => {
             if (searchInput.value.trim().length < 2) {
                 showRecentSearches();
             }
         });
-
-        async function initializeSearch() {
+        
+        // التهيئة
+        async function initialize() {
             loadingSpinner.style.display = 'block';
             try {
                 await loadAllUsers();
                 await loadBlockedUsers();
                 loadingSpinner.style.display = 'none';
                 showRecentSearches();
-                console.log(`تم تحميل ${cachedUsers.length} مستخدم (بعد استبعاد المحظورين)`);
             } catch (error) {
-                console.error('Error initializing search:', error);
                 loadingSpinner.style.display = 'none';
             }
         }
-
-        auth.onAuthStateChanged((user) => {
+        
+        auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
-                initializeSearch();
+                initialize();
             } else {
                 window.location.href = 'index.html';
             }

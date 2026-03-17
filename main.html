@@ -497,5 +497,42 @@
             }
         });
     </script>
+	<!-- أضف هذا السطر في نهاية body في main.html -->
+	<script>
+	// تسجيل Service Worker
+	if ('serviceWorker' in navigator) {
+		navigator.serviceWorker.register('/firebase-messaging-sw.js')
+			.then(reg => console.log('Service Worker registered'))
+			.catch(err => console.log('Service Worker error:', err));
+	}
+	</script>
+
+	<!-- واستبدل دالة toggleLike الموجودة بهذه -->
+	<script>
+	window.toggleLike = async (postId, btn) => {
+		if (!currentUser) {
+			window.location.href = 'index.html';
+			return;
+		}
+		
+		try {
+			const isLiked = await db.toggleLike(postId, currentUser.uid);
+			
+			if (isLiked) {
+				btn.classList.add('active');
+				btn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+			} else {
+				btn.classList.remove('active');
+				btn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+			}
+			
+			const countSpan = btn.nextElementSibling;
+			countSpan.textContent = parseInt(countSpan.textContent) + (isLiked ? 1 : -1);
+			
+		} catch (error) {
+			console.error('Error toggling like:', error);
+		}
+	};
+	</script>
 </body>
 </html>

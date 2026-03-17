@@ -2035,5 +2035,34 @@
             }
         });
     </script>
+	<!-- أضف هذا في نهاية script في chat.html -->
+	<script>
+	// تسجيل Service Worker
+	if ('serviceWorker' in navigator) {
+		navigator.serviceWorker.register('/firebase-messaging-sw.js')
+			.then(reg => console.log('Service Worker registered'))
+			.catch(err => console.log('Service Worker error:', err));
+	}
+
+	// في دالة loadMessages، بعد تحميل الرسائل:
+	if (messages.length > 0) {
+		const lastMessage = messages[messages.length - 1];
+		if (lastMessage.senderId !== currentUser?.uid && !lastMessage.read) {
+			db.playSound('not');
+			
+			const sender = await db.getUser(lastMessage.senderId);
+			db.notify.showNewMessage(
+				sender?.displayName || sender?.username || 'مستخدم',
+				lastMessage.type === 'text' ? lastMessage.content : '📎 وسائط',
+				currentChatId
+			);
+		}
+	}
+	</script>
+	<script>
+	if ('serviceWorker' in navigator) {
+		navigator.serviceWorker.register('/firebase-messaging-sw.js');
+	}
+	</script>
 </body>
 </html>

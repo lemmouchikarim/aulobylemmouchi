@@ -1,5 +1,5 @@
 // ==================== js/firebase-config.js ====================
-// تهيئة Firebase مع تخزين مؤقت - نسخة كاملة
+// تهيئة Firebase مع تخزين مؤقت وإشعارات - نسخة كاملة
 
 const firebaseConfig = {
     apiKey: "AIzaSyBZj9QplNw-VmwSl8Ijv_b6nIi4ghcHDms",
@@ -16,17 +16,125 @@ firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 const auth = firebase.auth();
 
+// ==================== نظام الصوت ====================
+const AudioManager = {
+    sounds: {
+        like: new Audio('sounds/like.mp3'),
+        not: new Audio('sounds/not.mp3')
+    },
+    
+    play(soundName) {
+        const sound = this.sounds[soundName];
+        if (sound) {
+            sound.currentTime = 0;
+            sound.play().catch(e => console.log('صوت غير متاح:', e));
+        }
+    },
+    
+    isSupported() {
+        return !!(window.Audio);
+    }
+};
+
+// ==================== نظام الإشعارات للهواتف ====================
+const NotificationManager = {
+    permission: false,
+    
+    async requestPermission() {
+        if (!('Notification' in window)) {
+            console.log('هذا المتصفح لا يدعم إشعارات سطح المكتب');
+            return false;
+        }
+        
+        if (Notification.permission === 'granted') {
+            this.permission = true;
+            return true;
+        }
+        
+        if (Notification.permission !== 'denied') {
+            const permission = await Notification.requestPermission();
+            this.permission = permission === 'granted';
+            return this.permission;
+        }
+        
+        return false;
+    },
+    
+    show(title, options = {}) {
+        if (!this.permission) return;
+        
+        const defaultOptions = {
+            icon: '/images/l.png',
+            badge: '/images/l.png',
+            vibrate: [200, 100, 200],
+            sound: '/sounds/not.mp3',
+            ...options
+        };
+        
+        try {
+            const notification = new Notification(title, defaultOptions);
+            
+            AudioManager.play('not');
+            
+            if (options.url) {
+                notification.onclick = () => {
+                    window.focus();
+                    if (options.url) window.location.href = options.url;
+                };
+            }
+            
+            setTimeout(() => notification.close(), 5000);
+            
+            return notification;
+            
+        } catch (error) {
+            console.error('Error showing notification:', error);
+        }
+    },
+    
+    showNewMessage(senderName, message, chatId) {
+        this.show(`💬 ${senderName}`, {
+            body: message.length > 50 ? message.substring(0, 47) + '...' : message,
+            url: `chat.html?id=${chatId}`,
+            tag: `chat-${chatId}`,
+            renotify: true
+        });
+    },
+    
+    showNewLike(senderName, postId) {
+        this.show(`❤️ ${senderName}`, {
+            body: 'أعجب بمنشورك',
+            url: `main.html?post=${postId}`,
+            tag: `like-${postId}`
+        });
+    },
+    
+    showNewFollower(senderName) {
+        this.show(`👥 ${senderName}`, {
+            body: 'بدأ بمتابعتك',
+            url: `profile.html?id=${senderName}`,
+            tag: 'follower'
+        });
+    },
+    
+    showFollowRequest(senderName) {
+        this.show(`🔒 ${senderName}`, {
+            body: 'يريد متابعتك',
+            url: `myprofile.html?tab=requests`,
+            tag: 'follow-request'
+        });
+    }
+};
+
 // ==================== نظام التخزين المؤقت المتقدم ====================
 class CacheManager {
     constructor(ttlMinutes = 5) {
         this.cache = new Map();
-        this.ttl = ttlMinutes * 60 * 1000; // تحويل إلى ميلي ثانية
-        this.pending = new Map(); // للطلبات المعلقة
+        this.ttl = ttlMinutes * 60 * 1000;
+        this.pending = new Map();
     }
 
-    // جلب من الكاش أو تنفيذ الدالة
     async get(key, fetcher) {
-        // التحقق من وجود في الكاش
         if (this.cache.has(key)) {
             const item = this.cache.get(key);
             if (Date.now() - item.timestamp < this.ttl) {
@@ -35,12 +143,10 @@ class CacheManager {
             this.cache.delete(key);
         }
 
-        // إذا كان هناك طلب معلق لنفس المفتاح
         if (this.pending.has(key)) {
             return this.pending.get(key);
         }
 
-        // تنفيذ الطلب
         const promise = fetcher().then(data => {
             this.cache.set(key, {
                 data,
@@ -57,18 +163,15 @@ class CacheManager {
         return promise;
     }
 
-    // حذف عنصر من الكاش
     delete(key) {
         this.cache.delete(key);
     }
 
-    // تفريغ الكاش
     clear() {
         this.cache.clear();
         this.pending.clear();
     }
 
-    // حذف عناصر معينة (مثلاً كل ما يخص مستخدم)
     deletePattern(pattern) {
         for (const key of this.cache.keys()) {
             if (key.includes(pattern)) {
@@ -78,12 +181,11 @@ class CacheManager {
     }
 }
 
-// ==================== مخازن مؤقتة ====================
-const userCache = new CacheManager(5); // 5 دقائق للمستخدمين
-const postCache = new CacheManager(3); // 3 دقائق للمنشورات
-const chatCache = new CacheManager(2); // دقيقتين للمحادثات
+const userCache = new CacheManager(5);
+const postCache = new CacheManager(3);
+const chatCache = new CacheManager(2);
 
-// ==================== دوال المستخدمين المحسنة ====================
+// ==================== دوال المستخدمين ====================
 async function getUser(uid) {
     if (!uid) return null;
     
@@ -103,7 +205,7 @@ async function updateUser(uid, data) {
     return database.ref(`users/${uid}`).update(data);
 }
 
-// ==================== دوال المنشورات المحسنة ====================
+// ==================== دوال المنشورات ====================
 async function getPosts(limit = 10, startFrom = null) {
     let query = database.ref('posts')
         .orderByChild('timestamp')
@@ -151,7 +253,6 @@ async function addPost(postData) {
         comments: 0
     });
     
-    // تحديث عدد منشورات المستخدم
     const userRef = database.ref(`users/${postData.userId}`);
     const userSnapshot = await userRef.once('value');
     const userData = userSnapshot.val() || {};
@@ -159,7 +260,6 @@ async function addPost(postData) {
         postsCount: (userData.postsCount || 0) + 1
     });
     
-    // مسح الكاش
     postCache.deletePattern('user_posts');
     postCache.deletePattern('posts');
     
@@ -170,7 +270,6 @@ async function deletePost(postId, userId) {
     await database.ref(`posts/${postId}`).remove();
     await database.ref(`likes/${postId}`).remove();
     
-    // تحديث عدد منشورات المستخدم
     const userRef = database.ref(`users/${userId}`);
     const userSnapshot = await userRef.once('value');
     const userData = userSnapshot.val() || {};
@@ -178,12 +277,11 @@ async function deletePost(postId, userId) {
         postsCount: Math.max(0, (userData.postsCount || 1) - 1)
     });
     
-    // مسح الكاش
     postCache.deletePattern('user_posts');
     postCache.deletePattern('posts');
 }
 
-// ==================== دوال الإعجابات المحسنة ====================
+// ==================== دوال الإعجابات مع الصوت ====================
 async function toggleLike(postId, userId) {
     const likeRef = database.ref(`likes/${postId}/${userId}`);
     const snapshot = await likeRef.once('value');
@@ -195,9 +293,28 @@ async function toggleLike(postId, userId) {
     } else {
         await likeRef.set({ timestamp: Date.now() });
         await database.ref(`posts/${postId}/likes`).transaction(current => (current || 0) + 1);
+        
+        AudioManager.play('like');
+        
+        const postSnapshot = await database.ref(`posts/${postId}`).once('value');
+        const post = postSnapshot.val();
+        
+        if (post && post.userId !== userId) {
+            await addNotification(post.userId, {
+                type: 'like',
+                userId: userId,
+                postId: postId,
+                timestamp: Date.now()
+            });
+            
+            const liker = await getUser(userId);
+            NotificationManager.showNewLike(
+                liker?.displayName || liker?.username || 'مستخدم',
+                postId
+            );
+        }
     }
     
-    // مسح الكاش
     postCache.deletePattern('posts');
     
     return !exists;
@@ -209,7 +326,7 @@ async function checkIfLiked(postId, userId) {
     return snapshot.exists();
 }
 
-// ==================== دوال المحادثات المحسنة ====================
+// ==================== دوال المحادثات ====================
 async function getChatMessages(chatId, limit = 50) {
     const cacheKey = `chat_${chatId}_${limit}`;
     
@@ -242,13 +359,35 @@ async function sendMessage(chatId, messageData) {
         lastSenderId: messageData.senderId
     });
     
-    // مسح كاش المحادثة
+    const chatSnapshot = await database.ref(`chats/${chatId}`).once('value');
+    const chat = chatSnapshot.val();
+    const otherUserId = Object.keys(chat.participants).find(id => id !== messageData.senderId);
+    
+    if (otherUserId) {
+        const sender = await getUser(messageData.senderId);
+        const senderName = sender?.displayName || sender?.username || 'مستخدم';
+        
+        await addNotification(otherUserId, {
+            type: 'chat',
+            userId: messageData.senderId,
+            chatId: chatId,
+            message: messageData.type === 'text' ? messageData.content : '📎 وسائط',
+            timestamp: Date.now()
+        });
+        
+        NotificationManager.showNewMessage(
+            senderName,
+            messageData.type === 'text' ? messageData.content : '📎 وسائط',
+            chatId
+        );
+    }
+    
     chatCache.deletePattern(chatId);
     
     return messageId;
 }
 
-// ==================== دوال المتابعة المحسنة ====================
+// ==================== دوال المتابعة ====================
 async function followUser(currentUserId, targetUserId) {
     await database.ref(`followers/${targetUserId}/${currentUserId}`).set({
         timestamp: Date.now()
@@ -258,7 +397,17 @@ async function followUser(currentUserId, targetUserId) {
         timestamp: Date.now()
     });
     
-    // مسح كاش المستخدمين
+    const follower = await getUser(currentUserId);
+    const followerName = follower?.displayName || follower?.username || 'مستخدم';
+    
+    await addNotification(targetUserId, {
+        type: 'follow',
+        userId: currentUserId,
+        timestamp: Date.now()
+    });
+    
+    NotificationManager.showNewFollower(followerName);
+    
     userCache.delete(`user_${currentUserId}`);
     userCache.delete(`user_${targetUserId}`);
 }
@@ -267,7 +416,6 @@ async function unfollowUser(currentUserId, targetUserId) {
     await database.ref(`followers/${targetUserId}/${currentUserId}`).remove();
     await database.ref(`following/${currentUserId}/${targetUserId}`).remove();
     
-    // مسح كاش المستخدمين
     userCache.delete(`user_${currentUserId}`);
     userCache.delete(`user_${targetUserId}`);
 }
@@ -282,7 +430,21 @@ async function getFollowingCount(userId) {
     return snapshot.exists() ? snapshot.numChildren() : 0;
 }
 
-// ==================== دوال الإشعارات المحسنة ====================
+// ==================== دوال الإشعارات مع الصوت ====================
+async function addNotification(userId, notification) {
+    const notifRef = database.ref(`notifications/${userId}`).push();
+    
+    await notifRef.set({
+        id: notifRef.key,
+        ...notification,
+        read: false
+    });
+    
+    AudioManager.play('not');
+    
+    return notifRef.key;
+}
+
 async function getNotifications(userId, limit = 30) {
     const snapshot = await database.ref(`notifications/${userId}`)
         .orderByChild('timestamp')
@@ -325,32 +487,25 @@ async function getUnreadNotificationsCount(userId) {
     return snapshot.exists() ? snapshot.numChildren() : 0;
 }
 
-// ==================== دوال الحظر المحسنة ====================
+// ==================== دوال الحظر ====================
 async function blockUser(currentUserId, targetUserId) {
-    // حذف المتابعة المتبادلة
     await database.ref(`followers/${targetUserId}/${currentUserId}`).remove();
     await database.ref(`followers/${currentUserId}/${targetUserId}`).remove();
     await database.ref(`following/${targetUserId}/${currentUserId}`).remove();
     await database.ref(`following/${currentUserId}/${targetUserId}`).remove();
-    
-    // حذف طلبات المتابعة
     await database.ref(`followRequests/${targetUserId}/${currentUserId}`).remove();
     await database.ref(`followRequests/${currentUserId}/${targetUserId}`).remove();
     
-    // إضافة إلى قائمة الحظر
     await database.ref(`blocked/${currentUserId}/${targetUserId}`).set({
         timestamp: Date.now()
     });
     
-    // إرسال إشعار
-    await database.ref(`notifications/${targetUserId}`).push({
+    await addNotification(targetUserId, {
         type: 'blocked',
         userId: currentUserId,
-        timestamp: Date.now(),
-        read: false
+        timestamp: Date.now()
     });
     
-    // مسح الكاش
     userCache.delete(`user_${currentUserId}`);
     userCache.delete(`user_${targetUserId}`);
 }
@@ -358,7 +513,6 @@ async function blockUser(currentUserId, targetUserId) {
 async function unblockUser(currentUserId, targetUserId) {
     await database.ref(`blocked/${currentUserId}/${targetUserId}`).remove();
     
-    // مسح الكاش
     userCache.delete(`user_${currentUserId}`);
     userCache.delete(`user_${targetUserId}`);
 }
@@ -390,49 +544,51 @@ database.ref('.info/connected').on('value', (snap) => {
     }
 });
 
-// ==================== تصدير الدوال للاستخدام العام ====================
+// ==================== طلب إذن الإشعارات عند تسجيل الدخول ====================
+auth.onAuthStateChanged(user => {
+    if (user) {
+        NotificationManager.requestPermission();
+        
+        database.ref(`notifications/${user.uid}`)
+            .orderByChild('read')
+            .equalTo(false)
+            .limitToLast(1)
+            .on('child_added', (snapshot) => {
+                AudioManager.play('not');
+            });
+    }
+});
+
+// ==================== تصدير الدوال ====================
 window.db = {
-    // المستخدمين
     getUser,
     getUsers,
     updateUser,
-    
-    // المنشورات
     getPosts,
     getUserPosts,
     addPost,
     deletePost,
-    
-    // الإعجابات
     toggleLike,
     checkIfLiked,
-    
-    // المحادثات
     getChatMessages,
     sendMessage,
-    
-    // المتابعة
     followUser,
     unfollowUser,
     getFollowersCount,
     getFollowingCount,
-    
-    // الإشعارات
     getNotifications,
     markNotificationAsRead,
     markAllNotificationsAsRead,
     getUnreadNotificationsCount,
-    
-    // الحظر
     blockUser,
     unblockUser,
     isBlocked,
     isBlockedBy,
-    
-    // الكاش
     clearCache: () => {
         userCache.clear();
         postCache.clear();
         chatCache.clear();
-    }
+    },
+    playSound: (name) => AudioManager.play(name),
+    notify: NotificationManager
 };

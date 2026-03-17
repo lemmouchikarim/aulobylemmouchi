@@ -548,6 +548,31 @@
                 window.location.href = 'index.html';
             }
         });
-    </script>
+	</script>
+		<!-- أضف هذا في نهاية script في not.html -->
+	<script>
+	// تسجيل Service Worker
+	if ('serviceWorker' in navigator) {
+		navigator.serviceWorker.register('/firebase-messaging-sw.js')
+			.then(reg => console.log('Service Worker registered'))
+			.catch(err => console.log('Service Worker error:', err));
+	}
+
+	// الاستماع للإشعارات الجديدة
+	if (currentUser) {
+		database.ref(`notifications/${currentUser.uid}`)
+			.orderByChild('read')
+			.equalTo(false)
+			.limitToLast(1)
+			.on('child_added', (snapshot) => {
+				db.playSound('not');
+			});
+	}
+	</script>
+	<script>
+	if ('serviceWorker' in navigator) {
+		navigator.serviceWorker.register('/firebase-messaging-sw.js');
+	}
+	</script>
 </body>
 </html>

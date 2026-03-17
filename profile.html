@@ -11,9 +11,8 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="images/l.png">
     
-    <!-- Font Awesome متأخر -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
         :root {
@@ -112,6 +111,7 @@
             color: #444;
             text-align: center;
             margin-bottom: 15px;
+            max-width: 90%;
         }
         
         .follow-stats {
@@ -257,8 +257,16 @@
         
         .like-btn.active { color: var(--primary-color); }
         
-        .loading { text-align: center; padding: 30px; color: var(--secondary-text); }
-        .loading i { color: var(--primary-color); font-size: 24px; }
+        .loading { 
+            text-align: center; 
+            padding: 30px; 
+            color: var(--secondary-text); 
+        }
+        
+        .loading i { 
+            color: var(--primary-color); 
+            font-size: 24px; 
+        }
         
         .error-message {
             text-align: center;
@@ -306,6 +314,12 @@
             color: var(--secondary-text);
             margin-bottom: 15px;
         }
+        
+        .privacy-icon {
+            margin-right: 5px;
+            font-size: 14px;
+            color: var(--secondary-text);
+        }
     </style>
 </head>
 <body>
@@ -325,7 +339,10 @@
             <div class="profile-header">
                 <img src="images/profile.png" id="user-avatar" class="profile-avatar" loading="lazy">
                 
-                <div class="display-name" id="user-display-name">جاري التحميل...</div>
+                <div class="display-name" id="user-display-name">
+                    جاري التحميل...
+                    <span id="privacy-icon" class="privacy-icon" style="display: none;"></span>
+                </div>
                 <div class="username" id="user-username">@...</div>
                 <div class="bio" id="user-bio"></div>
                 
@@ -396,12 +413,25 @@
     <div id="snackbar" class="snackbar"></div>
     
     <!-- Firebase -->
-    <script defer src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
-    <script defer src="js/firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
     
     <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZj9QplNw-VmwSl8Ijv_b6nIi4ghcHDms",
+            authDomain: "aulobylemmouchi.firebaseapp.com",
+            databaseURL: "https://aulobylemmouchi-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "aulobylemmouchi",
+            storageBucket: "aulobylemmouchi.firebasestorage.app",
+            messagingSenderId: "63959796567",
+            appId: "1:63959796567:web:5cb2b14ca64cc01b6d4c12"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
         let currentUser = null;
         let targetUserId = null;
         let targetUserData = null;
@@ -426,6 +456,17 @@
             return `${day}/${month}/${year}`;
         }
         
+        function formatBirthdate(dateString) {
+            if (!dateString) return '--/--/----';
+            if (dateString.includes('-')) {
+                const parts = dateString.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+            }
+            return dateString;
+        }
+        
         // الحصول على معرف المستخدم من الرابط
         function getUserIdFromUrl() {
             const params = new URLSearchParams(window.location.search);
@@ -436,8 +477,15 @@
         async function checkBlockStatus() {
             if (!currentUser || !targetUserId) return;
             
-            isBlocked = await db.isBlocked(currentUser.uid, targetUserId);
-            isBlockedBy = await db.isBlockedBy(currentUser.uid, targetUserId);
+            try {
+                const blockedSnapshot = await database.ref(`blocked/${currentUser.uid}/${targetUserId}`).once('value');
+                isBlocked = blockedSnapshot.exists();
+                
+                const blockedBySnapshot = await database.ref(`blocked/${targetUserId}/${currentUser.uid}`).once('value');
+                isBlockedBy = blockedBySnapshot.exists();
+            } catch (error) {
+                console.error('Error checking block status:', error);
+            }
         }
         
         // تحميل الملف الشخصي
@@ -456,7 +504,8 @@
             }
             
             try {
-                targetUserData = await db.getUser(targetUserId);
+                const userSnapshot = await database.ref(`users/${targetUserId}`).once('value');
+                targetUserData = userSnapshot.val();
                 
                 if (!targetUserData) {
                     document.getElementById('error-message').style.display = 'block';
@@ -475,20 +524,23 @@
                 
                 // عرض المعلومات الأساسية
                 document.getElementById('profile-content').style.display = 'block';
-                document.getElementById('header-name').textContent = targetUserData.displayName || targetUserData.username;
+                document.getElementById('header-name').textContent = targetUserData.displayName || targetUserData.username || 'الملف الشخصي';
                 document.getElementById('user-avatar').src = targetUserData.avatar || 'images/profile.png';
-                document.getElementById('user-display-name').textContent = targetUserData.displayName || targetUserData.username;
-                document.getElementById('user-username').textContent = `@${targetUserData.username}`;
+                document.getElementById('user-display-name').childNodes[0].nodeValue = targetUserData.displayName || targetUserData.username || 'مستخدم';
+                document.getElementById('user-username').textContent = `@${targetUserData.username || 'username'}`;
                 document.getElementById('user-bio').textContent = targetUserData.bio || 'لا يوجد نبذة شخصية';
                 document.getElementById('posts-count').textContent = targetUserData.postsCount || 0;
                 
-                // تاريخ الميلاد
-                if (targetUserData.birthdate) {
-                    const date = targetUserData.birthdate.split('-');
-                    if (date.length === 3) {
-                        document.getElementById('user-dob').textContent = `${date[2]}/${date[1]}/${date[0]}`;
-                    }
+                // أيقونة الخصوصية
+                if (targetUserData.privacy === 'private') {
+                    document.getElementById('privacy-icon').style.display = 'inline';
+                    document.getElementById('privacy-icon').innerHTML = '<i class="fa-solid fa-lock"></i>';
+                } else {
+                    document.getElementById('privacy-icon').style.display = 'none';
                 }
+                
+                // تاريخ الميلاد
+                document.getElementById('user-dob').textContent = formatBirthdate(targetUserData.birthdate);
                 
                 // الجنس
                 const genderSpan = document.getElementById('user-gender');
@@ -500,18 +552,18 @@
                 } else if (targetUserData.gender === 'female') {
                     genderSpan.textContent = 'أنثى';
                     genderIcon.className = 'fa-solid fa-venus';
+                } else {
+                    genderSpan.textContent = 'غير محدد';
                 }
                 
                 // إحصائيات المتابعة
-                const followersCount = await db.getFollowersCount(targetUserId);
-                const followingCount = await db.getFollowingCount(targetUserId);
-                document.getElementById('followers-count').textContent = followersCount;
-                document.getElementById('following-count').textContent = followingCount;
+                await loadFollowCounts();
                 
                 // حالة المتابعة
-                const followSnapshot = await database.ref(`followers/${targetUserId}/${currentUser.uid}`).once('value');
-                isFollowing = followSnapshot.exists();
-                document.getElementById('follow-btn').textContent = isFollowing ? 'إلغاء المتابعة' : 'متابعة';
+                await checkFollowStatus();
+                
+                // التحقق من صلاحية العرض (حساب خاص)
+                await checkViewPermission();
                 
                 // تحميل المنشورات
                 loadUserPosts();
@@ -521,6 +573,107 @@
                 document.getElementById('error-message').style.display = 'block';
             }
         }
+        
+        // تحميل إحصائيات المتابعة
+        async function loadFollowCounts() {
+            if (!targetUserId) return;
+            
+            try {
+                const followersSnapshot = await database.ref(`followers/${targetUserId}`).once('value');
+                const followersCount = followersSnapshot.exists() ? followersSnapshot.numChildren() : 0;
+                document.getElementById('followers-count').textContent = followersCount;
+                
+                const followingSnapshot = await database.ref(`following/${targetUserId}`).once('value');
+                const followingCount = followingSnapshot.exists() ? followingSnapshot.numChildren() : 0;
+                document.getElementById('following-count').textContent = followingCount;
+            } catch (error) {
+                console.error('Error loading follow counts:', error);
+            }
+        }
+        
+        // التحقق من حالة المتابعة
+        async function checkFollowStatus() {
+            if (!currentUser || !targetUserId) return;
+            
+            try {
+                const followSnapshot = await database.ref(`followers/${targetUserId}/${currentUser.uid}`).once('value');
+                isFollowing = followSnapshot.exists();
+                document.getElementById('follow-btn').textContent = isFollowing ? 'إلغاء المتابعة' : 'متابعة';
+            } catch (error) {
+                console.error('Error checking follow status:', error);
+            }
+        }
+        
+        // التحقق من صلاحية العرض (للحسابات الخاصة)
+        async function checkViewPermission() {
+            const canView = targetUserData.privacy !== 'private' || isFollowing;
+            
+            const privateNotice = document.getElementById('private-message');
+            const postsSection = document.querySelector('.posts-section');
+            const profileInfo = document.getElementById('profile-info');
+            const followStats = document.getElementById('follow-stats');
+            const chatBtn = document.getElementById('chat-btn');
+            
+            if (canView) {
+                privateNotice.style.display = 'none';
+                postsSection.style.display = 'block';
+                profileInfo.style.display = 'flex';
+                followStats.style.display = 'flex';
+                chatBtn.disabled = false;
+            } else {
+                privateNotice.style.display = 'block';
+                postsSection.style.display = 'none';
+                profileInfo.style.display = 'none';
+                followStats.style.display = 'none';
+                chatBtn.disabled = true;
+            }
+        }
+        
+        // متابعة / إلغاء متابعة
+        window.toggleFollow = async () => {
+            if (!currentUser || !targetUserId) return;
+            
+            try {
+                if (isFollowing) {
+                    // إلغاء المتابعة
+                    await database.ref(`followers/${targetUserId}/${currentUser.uid}`).remove();
+                    await database.ref(`following/${currentUser.uid}/${targetUserId}`).remove();
+                    isFollowing = false;
+                    document.getElementById('follow-btn').textContent = 'متابعة';
+                } else {
+                    // متابعة
+                    await database.ref(`followers/${targetUserId}/${currentUser.uid}`).set({
+                        uid: currentUser.uid,
+                        timestamp: Date.now()
+                    });
+                    await database.ref(`following/${currentUser.uid}/${targetUserId}`).set({
+                        uid: targetUserId,
+                        timestamp: Date.now()
+                    });
+                    
+                    // إرسال إشعار
+                    await database.ref(`notifications/${targetUserId}`).push({
+                        type: 'follow',
+                        userId: currentUser.uid,
+                        timestamp: Date.now(),
+                        read: false
+                    });
+                    
+                    isFollowing = true;
+                    document.getElementById('follow-btn').textContent = 'إلغاء المتابعة';
+                }
+                
+                // تحديث الإحصائيات
+                await loadFollowCounts();
+                
+                // تحديث صلاحية العرض
+                await checkViewPermission();
+                
+            } catch (error) {
+                console.error('Error toggling follow:', error);
+                showMessage('حدث خطأ', true);
+            }
+        };
         
         // تحميل منشورات المستخدم
         async function loadUserPosts() {
@@ -532,7 +685,16 @@
             loadingEl.style.display = 'block';
             
             try {
-                const posts = await db.getUserPosts(targetUserId, 10);
+                const snapshot = await database.ref('posts')
+                    .orderByChild('userId')
+                    .equalTo(targetUserId)
+                    .limitToLast(10)
+                    .once('value');
+                
+                const posts = [];
+                snapshot.forEach(child => posts.push({ id: child.key, ...child.val() }));
+                posts.reverse();
+                
                 loadingEl.style.display = 'none';
                 
                 if (posts.length === 0) {
@@ -543,16 +705,23 @@
                 postsContainer.innerHTML = '';
                 
                 for (const post of posts) {
+                    // التحقق من الإعجاب
+                    let isLiked = false;
+                    if (currentUser) {
+                        const likeSnapshot = await database.ref(`likes/${post.id}/${currentUser.uid}`).once('value');
+                        isLiked = likeSnapshot.exists();
+                    }
+                    
                     const postDiv = document.createElement('div');
                     postDiv.className = 'post-card';
-                    
-                    const isLiked = await db.checkIfLiked(post.id, currentUser?.uid);
                     
                     let mediaHTML = '';
                     if (post.media && post.media.length > 0) {
                         const media = post.media[0];
                         if (media.type === 'image') {
-                            mediaHTML = `<img src="${media.url}" class="post-media" loading="lazy">`;
+                            mediaHTML = `<img src="${media.url}" class="post-media" loading="lazy" onclick="window.open('${media.url}', '_blank')">`;
+                        } else if (media.type === 'video') {
+                            mediaHTML = `<video src="${media.url}" class="post-media" controls preload="metadata"></video>`;
                         }
                     }
                     
@@ -584,48 +753,29 @@
             }
         }
         
-        // متابعة / إلغاء متابعة
-        window.toggleFollow = async () => {
-            if (!currentUser || !targetUserId) return;
-            
-            try {
-                if (isFollowing) {
-                    await db.unfollowUser(currentUser.uid, targetUserId);
-                    isFollowing = false;
-                    document.getElementById('follow-btn').textContent = 'متابعة';
-                } else {
-                    await db.followUser(currentUser.uid, targetUserId);
-                    isFollowing = true;
-                    document.getElementById('follow-btn').textContent = 'إلغاء المتابعة';
-                }
-                
-                // تحديث الإحصائيات
-                const followersCount = await db.getFollowersCount(targetUserId);
-                document.getElementById('followers-count').textContent = followersCount;
-                
-            } catch (error) {
-                console.error('Error toggling follow:', error);
-                showMessage('حدث خطأ', true);
-            }
-        };
-        
         // إعجاب
         window.toggleLike = async (postId, btn) => {
             if (!currentUser) return;
             
             try {
-                const isLiked = await db.toggleLike(postId, currentUser.uid);
+                const likeRef = database.ref(`likes/${postId}/${currentUser.uid}`);
+                const snapshot = await likeRef.once('value');
+                const exists = snapshot.exists();
                 
-                if (isLiked) {
-                    btn.classList.add('active');
-                    btn.innerHTML = '<i class="fa-solid fa-heart"></i>';
-                } else {
+                if (exists) {
+                    await likeRef.remove();
+                    await database.ref(`posts/${postId}/likes`).transaction(current => (current || 1) - 1);
                     btn.classList.remove('active');
                     btn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+                } else {
+                    await likeRef.set({ timestamp: Date.now() });
+                    await database.ref(`posts/${postId}/likes`).transaction(current => (current || 0) + 1);
+                    btn.classList.add('active');
+                    btn.innerHTML = '<i class="fa-solid fa-heart"></i>';
                 }
                 
                 const countSpan = btn.nextElementSibling;
-                countSpan.textContent = parseInt(countSpan.textContent) + (isLiked ? 1 : -1);
+                countSpan.textContent = parseInt(countSpan.textContent) + (exists ? -1 : 1);
                 
             } catch (error) {
                 console.error('Error toggling like:', error);
@@ -639,8 +789,13 @@
             }
         };
         
-        window.showFollowers = () => showMessage(`عدد المتابعين: ${document.getElementById('followers-count').textContent}`);
-        window.showFollowing = () => showMessage(`يتابع: ${document.getElementById('following-count').textContent}`);
+        window.showFollowers = () => {
+            showMessage(`عدد المتابعين: ${document.getElementById('followers-count').textContent}`);
+        };
+        
+        window.showFollowing = () => {
+            showMessage(`يتابع: ${document.getElementById('following-count').textContent}`);
+        };
         
         auth.onAuthStateChanged(user => {
             if (user) {
@@ -651,10 +806,5 @@
             }
         });
     </script>
-	<script>
-	if ('serviceWorker' in navigator) {
-		navigator.serviceWorker.register('/firebase-messaging-sw.js');
-	}
-	</script>
 </body>
 </html>

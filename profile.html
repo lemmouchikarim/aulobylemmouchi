@@ -1,15 +1,10 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <link rel="icon" type="image/png" href="images/l.png">
-    <link rel="stylesheet" href="css/style.css">
-	<!-- أيقونات بأحجام مختلفة -->
-	<link rel="icon" type="image/png" sizes="16x16" href="images/l.png">
-	<link rel="icon" type="image/png" sizes="32x32" href="images/l.png">
-	<link rel="apple-touch-icon" href="images/l.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Aulo - ملف شخصي</title>
+    <link rel="icon" type="image/png" href="images/l.png">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/profile.css">
     <link rel="stylesheet" href="css/main.css">
@@ -45,6 +40,227 @@
             margin-bottom: 15px;
             opacity: 0.5;
         }
+        
+        .follow-stats {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+        
+        .stat-item {
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        .stat-number {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--secondary-text);
+        }
+        
+        .follow-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+        }
+        
+        .follow-btn.following {
+            background: #f1f1f1;
+            color: var(--text-color);
+        }
+        
+        .follow-btn.requested {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .follow-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .follow-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .profile-actions {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-top: 15px;
+            align-items: center;
+        }
+        
+        .btn-chat {
+            flex: 1;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .btn-chat:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        /* القائمة المنسدلة (ثلاث نقاط) */
+        .menu-container {
+            position: relative;
+        }
+        
+        .menu-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--secondary-text);
+            transition: background 0.2s;
+        }
+        
+        .menu-btn:hover {
+            background: #f5f5f5;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 45px;
+            left: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+            min-width: 180px;
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+        
+        .dropdown-menu.show {
+            display: block;
+        }
+        
+        .dropdown-item {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown-item:hover {
+            background: #f8f8f8;
+        }
+        
+        .dropdown-item i {
+            width: 20px;
+            color: var(--secondary-text);
+        }
+        
+        .dropdown-item.block {
+            color: var(--error-color);
+        }
+        
+        .dropdown-item.block i {
+            color: var(--error-color);
+        }
+        
+        .private-notice {
+            text-align: center;
+            padding: 40px 20px;
+            background: #f8f8f8;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        
+        .private-notice i {
+            font-size: 50px;
+            color: var(--secondary-text);
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .private-notice h4 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+        
+        .private-notice p {
+            color: var(--secondary-text);
+            font-size: 14px;
+        }
+        
+        .privacy-icon {
+            margin-right: 5px;
+            font-size: 14px;
+            color: var(--secondary-text);
+        }
+        
+        /* رسالة الحظر */
+        .blocked-notice {
+            text-align: center;
+            padding: 60px 20px;
+            background: #fff1f0;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 1px solid var(--error-color);
+        }
+        
+        .blocked-notice i {
+            font-size: 50px;
+            color: var(--error-color);
+            margin-bottom: 15px;
+        }
+        
+        .blocked-notice h4 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+        
+        .blocked-notice p {
+            color: var(--secondary-text);
+            font-size: 14px;
+        }
+        
+        .unblock-btn {
+            background: var(--error-color);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -66,23 +282,84 @@
             </div>
 
             <div class="profile-names">
-                <span id="user-display-name" class="p-display-name">جاري التحميل...</span>
+                <span id="user-display-name" class="p-display-name">
+                    جاري التحميل...
+                    <span id="privacy-icon" class="privacy-icon" style="display: none;"></span>
+                </span>
                 <span id="user-username" class="p-username">@...</span>
             </div>
 
             <p id="user-bio" class="p-bio">...</p>
 
-            <div class="profile-static-info">
+            <div class="follow-stats" id="follow-stats">
+                <div class="stat-item" onclick="showFollowers()">
+                    <div class="stat-number" id="followers-count">0</div>
+                    <div class="stat-label">متابعون</div>
+                </div>
+                <div class="stat-item" onclick="showFollowing()">
+                    <div class="stat-number" id="following-count">0</div>
+                    <div class="stat-label">يتابع</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="posts-count">0</div>
+                    <div class="stat-label">منشورات</div>
+                </div>
+            </div>
+
+            <div class="profile-static-info" id="profile-static-info">
                 <div class="info-item"><i class="fa-solid fa-cake-candles"></i> <span id="user-dob">--/--/----</span></div>
                 <div class="info-item"><i id="user-gender-icon" class="fa-solid fa-venus-mars"></i> <span id="user-gender">...</span></div>
             </div>
 
-            <div class="profile-actions">
-                <button id="start-chat-btn" class="btn-chat" onclick="startChat()">
-                    <i class="fa-solid fa-paper-plane" style="margin-left: 8px;"></i> دردش معه
+            <div class="profile-actions" id="profile-actions">
+                <button id="follow-btn" class="follow-btn" onclick="toggleFollow()">
+                    <i class="fa-solid fa-user-plus"></i> متابعة
                 </button>
+                <button id="start-chat-btn" class="btn-chat" onclick="startChat()">
+                    <i class="fa-solid fa-paper-plane"></i> دردش
+                </button>
+                
+                <!-- القائمة المنسدلة (ثلاث نقاط) -->
+                <div class="menu-container">
+                    <div class="menu-btn" onclick="toggleMenu()">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </div>
+                    <div class="dropdown-menu" id="dropdownMenu">
+                        <div class="dropdown-item block" onclick="blockUser()">
+                            <i class="fa-solid fa-ban"></i>
+                            <span>حظر المستخدم</span>
+                        </div>
+                        <div class="dropdown-item" onclick="reportUser()">
+                            <i class="fa-solid fa-flag"></i>
+                            <span>إبلاغ</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
+
+        <!-- رسالة الحظر (تظهر إذا كان المستخدم محظوراً) -->
+        <div id="blocked-notice" class="blocked-notice" style="display: none;">
+            <i class="fa-solid fa-ban"></i>
+            <h4>هذا المستخدم محظور</h4>
+            <p>لقد قمت بحظر هذا المستخدم. لا يمكنكما التفاعل أو مشاهدة منشورات بعضكما.</p>
+            <button class="unblock-btn" onclick="unblockUser()">
+                <i class="fa-solid fa-ban"></i> إلغاء الحظر
+            </button>
+        </div>
+
+        <!-- رسالة أنت محظور (تظهر إذا كان المستخدم قد حظرك) -->
+        <div id="you-are-blocked-notice" class="blocked-notice" style="display: none;">
+            <i class="fa-solid fa-ban"></i>
+            <h4>تم حظرك</h4>
+            <p>هذا المستخدم قام بحظرك. لا يمكنك التفاعل معه أو مشاهدة محتواه.</p>
+        </div>
+
+        <div id="private-notice" class="private-notice" style="display: none;">
+            <i class="fa-solid fa-lock"></i>
+            <h4>هذا الحساب خاص</h4>
+            <p>تابع هذا الحساب لتتمكن من رؤية المنشورات والمعلومات</p>
+        </div>
 
         <section class="user-posts-section" id="posts-section" style="display: none;">
             <h3 class="section-title">المنشورات</h3>
@@ -135,6 +412,11 @@
         let currentUser = null;
         let targetUserId = null;
         let targetUserData = null;
+        let isFollowing = false;
+        let hasRequested = false;
+        let canViewContent = false;
+        let isBlocked = false; // هل أنا حظرت هذا المستخدم؟
+        let isBlockedBy = false; // هل هذا المستخدم حظرني؟
 
         function formatDate(timestamp) {
             if (!timestamp) return '';
@@ -165,6 +447,345 @@
             return urlParams.get('id');
         }
 
+        // ==================== القائمة المنسدلة ====================
+        window.toggleMenu = () => {
+            const menu = document.getElementById('dropdownMenu');
+            menu.classList.toggle('show');
+            
+            // إغلاق القائمة عند النقر خارجها
+            if (menu.classList.contains('show')) {
+                setTimeout(() => {
+                    document.addEventListener('click', closeMenuOnClickOutside);
+                }, 0);
+            }
+        };
+
+        function closeMenuOnClickOutside(event) {
+            const menu = document.getElementById('dropdownMenu');
+            const menuBtn = document.querySelector('.menu-btn');
+            
+            if (!menu.contains(event.target) && !menuBtn.contains(event.target)) {
+                menu.classList.remove('show');
+                document.removeEventListener('click', closeMenuOnClickOutside);
+            }
+        }
+
+        // ==================== نظام الحظر ====================
+        window.blockUser = async () => {
+            if (!currentUser || !targetUserId) return;
+            
+            const confirmed = await Aulo.confirm(
+                'هل أنت متأكد من حظر هذا المستخدم؟',
+                {
+                    title: 'تأكيد الحظر',
+                    confirmText: 'حظر',
+                    cancelText: 'إلغاء'
+                }
+            );
+            
+            if (!confirmed) return;
+            
+            try {
+                // حذف المتابعة المتبادلة
+                await database.ref(`followers/${targetUserId}/${currentUser.uid}`).remove();
+                await database.ref(`followers/${currentUser.uid}/${targetUserId}`).remove();
+                await database.ref(`following/${targetUserId}/${currentUser.uid}`).remove();
+                await database.ref(`following/${currentUser.uid}/${targetUserId}`).remove();
+                
+                // حذف طلبات المتابعة
+                await database.ref(`followRequests/${targetUserId}/${currentUser.uid}`).remove();
+                await database.ref(`followRequests/${currentUser.uid}/${targetUserId}`).remove();
+                
+                // إضافة إلى قائمة الحظر
+                await database.ref(`blocked/${currentUser.uid}/${targetUserId}`).set({
+                    timestamp: Date.now()
+                });
+                
+                // إرسال إشعار للمحظور
+                await database.ref(`notifications/${targetUserId}`).push({
+                    type: 'blocked',
+                    userId: currentUser.uid,
+                    timestamp: Date.now(),
+                    read: false
+                });
+                
+                isBlocked = true;
+                updateBlockUI();
+                
+                Aulo.snackbar('تم حظر المستخدم');
+                
+            } catch (error) {
+                console.error('Error blocking user:', error);
+                Aulo.snackbar('حدث خطأ', true);
+            }
+        };
+
+        window.unblockUser = async () => {
+            if (!currentUser || !targetUserId) return;
+            
+            try {
+                await database.ref(`blocked/${currentUser.uid}/${targetUserId}`).remove();
+                
+                isBlocked = false;
+                updateBlockUI();
+                
+                Aulo.snackbar('تم إلغاء الحظر');
+                
+            } catch (error) {
+                console.error('Error unblocking user:', error);
+                Aulo.snackbar('حدث خطأ', true);
+            }
+        };
+
+        async function checkBlockStatus() {
+            if (!currentUser || !targetUserId) return;
+            
+            try {
+                // هل أنا حظرت هذا المستخدم؟
+                const blockedSnapshot = await database.ref(`blocked/${currentUser.uid}/${targetUserId}`).once('value');
+                isBlocked = blockedSnapshot.exists();
+                
+                // هل هذا المستخدم حظرني؟
+                const blockedBySnapshot = await database.ref(`blocked/${targetUserId}/${currentUser.uid}`).once('value');
+                isBlockedBy = blockedBySnapshot.exists();
+                
+            } catch (error) {
+                console.error('Error checking block status:', error);
+            }
+        }
+
+        function updateBlockUI() {
+            const profileSection = document.getElementById('profile-section');
+            const blockedNotice = document.getElementById('blocked-notice');
+            const youAreBlockedNotice = document.getElementById('you-are-blocked-notice');
+            const privateNotice = document.getElementById('private-notice');
+            const postsSection = document.getElementById('posts-section');
+            
+            if (isBlocked) {
+                // أنا حظرت هذا المستخدم
+                profileSection.style.display = 'none';
+                blockedNotice.style.display = 'block';
+                youAreBlockedNotice.style.display = 'none';
+                privateNotice.style.display = 'none';
+                postsSection.style.display = 'none';
+            } else if (isBlockedBy) {
+                // هذا المستخدم حظرني
+                profileSection.style.display = 'none';
+                blockedNotice.style.display = 'none';
+                youAreBlockedNotice.style.display = 'block';
+                privateNotice.style.display = 'none';
+                postsSection.style.display = 'none';
+            } else {
+                // لا يوجد حظر
+                profileSection.style.display = 'flex';
+                blockedNotice.style.display = 'none';
+                youAreBlockedNotice.style.display = 'none';
+            }
+        }
+
+        window.reportUser = () => {
+            Aulo.alert('تم إرسال البلاغ، شكراً لك', { title: 'بلاغ', type: 'success' });
+        };
+
+        // ==================== باقي الدوال ====================
+        async function checkViewPermission() {
+            if (!currentUser || !targetUserId) return false;
+            
+            if (targetUserId === currentUser.uid) return true;
+            
+            if (isBlocked || isBlockedBy) return false;
+            
+            if (targetUserData.privacy !== 'private') return true;
+            
+            try {
+                const snapshot = await database.ref(`followers/${targetUserId}/${currentUser.uid}`).once('value');
+                return snapshot.exists();
+            } catch (error) {
+                console.error('Error checking permission:', error);
+                return false;
+            }
+        }
+
+        async function checkFollowStatus() {
+            if (!currentUser || !targetUserId || isBlocked || isBlockedBy) return;
+            
+            try {
+                const snapshot = await database.ref(`followers/${targetUserId}/${currentUser.uid}`).once('value');
+                isFollowing = snapshot.exists();
+                
+                const requestSnapshot = await database.ref(`followRequests/${targetUserId}/${currentUser.uid}`).once('value');
+                hasRequested = requestSnapshot.exists();
+                
+                const followBtn = document.getElementById('follow-btn');
+                
+                if (isFollowing) {
+                    followBtn.innerHTML = '<i class="fa-solid fa-user-check"></i> متابعة';
+                    followBtn.classList.add('following');
+                    followBtn.classList.remove('requested');
+                } else if (hasRequested) {
+                    followBtn.innerHTML = '<i class="fa-solid fa-clock"></i> بانتظار القبول';
+                    followBtn.classList.add('requested');
+                    followBtn.classList.remove('following');
+                } else {
+                    followBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> متابعة';
+                    followBtn.classList.remove('following', 'requested');
+                }
+            } catch (error) {
+                console.error('Error checking follow status:', error);
+            }
+        }
+
+        async function loadFollowCounts() {
+            if (!targetUserId || isBlocked || isBlockedBy) return;
+            
+            try {
+                const followersSnapshot = await database.ref(`followers/${targetUserId}`).once('value');
+                const followersCount = followersSnapshot.exists() ? followersSnapshot.numChildren() : 0;
+                document.getElementById('followers-count').textContent = followersCount;
+                
+                const followingSnapshot = await database.ref(`following/${targetUserId}`).once('value');
+                const followingCount = followingSnapshot.exists() ? followingSnapshot.numChildren() : 0;
+                document.getElementById('following-count').textContent = followingCount;
+                
+            } catch (error) {
+                console.error('Error loading follow counts:', error);
+            }
+        }
+
+        window.toggleFollow = async () => {
+            if (!currentUser) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            if (isBlocked || isBlockedBy) {
+                Aulo.snackbar('لا يمكن متابعة هذا المستخدم', true);
+                return;
+            }
+
+            const followBtn = document.getElementById('follow-btn');
+            followBtn.disabled = true;
+
+            try {
+                if (isFollowing) {
+                    await database.ref(`followers/${targetUserId}/${currentUser.uid}`).remove();
+                    await database.ref(`following/${currentUser.uid}/${targetUserId}`).remove();
+                    
+                    isFollowing = false;
+                    followBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> متابعة';
+                    followBtn.classList.remove('following');
+                    
+                    Aulo.snackbar('تم إلغاء المتابعة');
+                    
+                } else if (hasRequested) {
+                    await database.ref(`followRequests/${targetUserId}/${currentUser.uid}`).remove();
+                    
+                    hasRequested = false;
+                    followBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> متابعة';
+                    followBtn.classList.remove('requested');
+                    
+                    Aulo.snackbar('تم إلغاء الطلب');
+                    
+                } else {
+                    if (targetUserData.privacy === 'private') {
+                        await database.ref(`followRequests/${targetUserId}/${currentUser.uid}`).set({
+                            userId: currentUser.uid,
+                            timestamp: Date.now()
+                        });
+                        
+                        hasRequested = true;
+                        followBtn.innerHTML = '<i class="fa-solid fa-clock"></i> بانتظار القبول';
+                        followBtn.classList.add('requested');
+                        
+                        await database.ref(`notifications/${targetUserId}`).push({
+                            type: 'follow_request',
+                            userId: currentUser.uid,
+                            timestamp: Date.now(),
+                            read: false
+                        });
+                        
+                        Aulo.snackbar('تم إرسال طلب المتابعة');
+                        
+                    } else {
+                        await database.ref(`followers/${targetUserId}/${currentUser.uid}`).set({
+                            uid: currentUser.uid,
+                            timestamp: Date.now()
+                        });
+                        
+                        await database.ref(`following/${currentUser.uid}/${targetUserId}`).set({
+                            uid: targetUserId,
+                            timestamp: Date.now()
+                        });
+                        
+                        isFollowing = true;
+                        followBtn.innerHTML = '<i class="fa-solid fa-user-check"></i> متابعة';
+                        followBtn.classList.add('following');
+                        
+                        await database.ref(`notifications/${targetUserId}`).push({
+                            type: 'follow',
+                            userId: currentUser.uid,
+                            timestamp: Date.now(),
+                            read: false
+                        });
+                        
+                        Aulo.snackbar('تمت المتابعة');
+                    }
+                }
+                
+                loadFollowCounts();
+                updateViewPermissions();
+                
+            } catch (error) {
+                console.error('Error toggling follow:', error);
+                Aulo.snackbar('حدث خطأ', true);
+            } finally {
+                followBtn.disabled = false;
+            }
+        };
+
+        async function updateViewPermissions() {
+            if (isBlocked || isBlockedBy) return;
+            
+            canViewContent = await checkViewPermission();
+            
+            const postsSection = document.getElementById('posts-section');
+            const privateNotice = document.getElementById('private-notice');
+            const followStats = document.getElementById('follow-stats');
+            const profileStaticInfo = document.getElementById('profile-static-info');
+            const chatBtn = document.getElementById('start-chat-btn');
+            
+            if (canViewContent) {
+                postsSection.style.display = 'block';
+                privateNotice.style.display = 'none';
+                followStats.style.display = 'flex';
+                profileStaticInfo.style.display = 'flex';
+                chatBtn.disabled = false;
+                loadUserPosts();
+            } else {
+                postsSection.style.display = 'none';
+                privateNotice.style.display = 'block';
+                followStats.style.display = 'none';
+                profileStaticInfo.style.display = 'none';
+                chatBtn.disabled = true;
+            }
+        }
+
+        window.showFollowers = () => {
+            if (!canViewContent) {
+                Aulo.snackbar('هذا الحساب خاص', true);
+                return;
+            }
+            Aulo.alert(`عدد المتابعين: ${document.getElementById('followers-count').textContent}`);
+        };
+
+        window.showFollowing = () => {
+            if (!canViewContent) {
+                Aulo.snackbar('هذا الحساب خاص', true);
+                return;
+            }
+            Aulo.alert(`يتابع: ${document.getElementById('following-count').textContent}`);
+        };
+
         async function loadProfile() {
             const user = auth.currentUser;
             if (!user) {
@@ -194,14 +815,34 @@
                     return;
                 }
 
+                // التحقق من حالة الحظر أولاً
+                await checkBlockStatus();
+                
+                // تحديث الواجهة بناءً على حالة الحظر
+                updateBlockUI();
+                
+                if (isBlocked || isBlockedBy) {
+                    // إذا كان هناك حظر، نعرض المعلومات الأساسية فقط
+                    document.getElementById('header-username').textContent = 
+                        targetUserData.displayName || targetUserData.username || 'الملف الشخصي';
+                    document.getElementById('user-avatar').src = targetUserData.avatar || 'images/profile.png';
+                    document.getElementById('user-display-name').childNodes[0].nodeValue = 
+                        targetUserData.displayName || targetUserData.username || 'مستخدم';
+                    document.getElementById('user-username').textContent = 
+                        `@${targetUserData.username || 'username'}`;
+                    document.getElementById('user-bio').textContent = 
+                        targetUserData.bio || 'لا يوجد نبذة شخصية';
+                    
+                    return;
+                }
+
                 document.getElementById('profile-section').style.display = 'flex';
-                document.getElementById('posts-section').style.display = 'block';
                 document.getElementById('error-container').style.display = 'none';
 
                 document.getElementById('header-username').textContent = 
                     targetUserData.displayName || targetUserData.username || 'الملف الشخصي';
                 document.getElementById('user-avatar').src = targetUserData.avatar || 'images/profile.png';
-                document.getElementById('user-display-name').textContent = 
+                document.getElementById('user-display-name').childNodes[0].nodeValue = 
                     targetUserData.displayName || targetUserData.username || 'مستخدم';
                 document.getElementById('user-username').textContent = 
                     `@${targetUserData.username || 'username'}`;
@@ -209,6 +850,14 @@
                     targetUserData.bio || 'لا يوجد نبذة شخصية';
                 document.getElementById('user-dob').textContent = 
                     formatBirthdate(targetUserData.birthdate);
+                document.getElementById('posts-count').textContent = targetUserData.postsCount || 0;
+                
+                if (targetUserData.privacy === 'private') {
+                    document.getElementById('privacy-icon').style.display = 'inline';
+                    document.getElementById('privacy-icon').innerHTML = '<i class="fa-solid fa-lock"></i>';
+                } else {
+                    document.getElementById('privacy-icon').style.display = 'none';
+                }
                 
                 const genderSpan = document.getElementById('user-gender');
                 const genderIcon = document.getElementById('user-gender-icon');
@@ -223,7 +872,9 @@
                     genderSpan.textContent = 'غير محدد';
                 }
 
-                loadUserPosts();
+                await checkFollowStatus();
+                await loadFollowCounts();
+                await updateViewPermissions();
 
             } catch (error) {
                 console.error('Error loading profile:', error);
@@ -349,6 +1000,16 @@
                     await postRef.update({ likes: (post.likes || 0) + 1 });
                     btn.classList.add('active');
                     btn.querySelector('i').className = 'fa-solid fa-heart';
+                    
+                    if (post.userId !== currentUser.uid) {
+                        await database.ref(`notifications/${post.userId}`).push({
+                            type: 'like',
+                            postId: postId,
+                            userId: currentUser.uid,
+                            timestamp: Date.now(),
+                            read: false
+                        });
+                    }
                 }
                 
                 const likeCountSpan = btn.nextElementSibling;
@@ -361,6 +1022,14 @@
         };
 
         window.startChat = () => {
+            if (!canViewContent) {
+                Aulo.snackbar('لا يمكن بدء محادثة مع حساب خاص', true);
+                return;
+            }
+            if (isBlocked || isBlockedBy) {
+                Aulo.snackbar('لا يمكن بدء محادثة مع هذا المستخدم', true);
+                return;
+            }
             if (targetUserId) {
                 window.location.href = `chat.html?id=${targetUserId}`;
             }

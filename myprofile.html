@@ -1,15 +1,10 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <link rel="icon" type="image/png" href="images/l.png">
-    <link rel="stylesheet" href="css/style.css">
-	<!-- أيقونات بأحجام مختلفة -->
-	<link rel="icon" type="image/png" sizes="16x16" href="images/l.png">
-	<link rel="icon" type="image/png" sizes="32x32" href="images/l.png">
-	<link rel="apple-touch-icon" href="images/l.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Aulo - ملفي الشخصي</title>
+    <link rel="icon" type="image/png" href="images/l.png">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/profile.css">
     <link rel="stylesheet" href="css/main.css">
@@ -97,6 +92,134 @@
             padding: 5px;
             cursor: pointer;
         }
+        
+        /* إحصائيات المتابعة */
+        .follow-stats {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+        
+        .stat-item {
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        .stat-number {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--secondary-text);
+        }
+        
+        /* زر تغيير وضع الحساب */
+        .privacy-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f8f8;
+            border-radius: 30px;
+        }
+        
+        .privacy-option {
+            padding: 8px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .privacy-option.public {
+            background: transparent;
+            color: var(--secondary-text);
+        }
+        
+        .privacy-option.private {
+            background: transparent;
+            color: var(--secondary-text);
+        }
+        
+        .privacy-option.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .privacy-option i {
+            margin-left: 5px;
+        }
+        
+        /* طلبات المتابعة */
+        .requests-badge {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .requests-count {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            background: var(--error-color);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* أزرار التحكم */
+        .profile-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            margin-top: 15px;
+        }
+        
+        .profile-actions-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        
+        .btn-edit {
+            flex: 1;
+            background: #f0f0f0;
+            color: var(--text-color);
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        
+        .btn-danger {
+            background: #fff1f0;
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+        
+        .btn-danger i {
+            color: var(--error-color);
+        }
     </style>
 </head>
 <body>
@@ -128,16 +251,59 @@
 
             <p id="my-bio" class="p-bio">لا يوجد نبذة شخصية حالياً.</p>
 
+            <!-- زر تغيير وضع الحساب -->
+            <div class="privacy-toggle">
+                <div id="public-option" class="privacy-option public" onclick="setPrivacy('public')">
+                    <i class="fa-solid fa-globe"></i> عام
+                </div>
+                <div id="private-option" class="privacy-option private" onclick="setPrivacy('private')">
+                    <i class="fa-solid fa-lock"></i> خاص
+                </div>
+            </div>
+
+            <!-- إحصائيات المتابعة -->
+            <div class="follow-stats">
+                <div class="stat-item" onclick="showMyFollowers()">
+                    <div class="stat-number" id="my-followers-count">0</div>
+                    <div class="stat-label">متابعون</div>
+                </div>
+                <div class="stat-item" onclick="showMyFollowing()">
+                    <div class="stat-number" id="my-following-count">0</div>
+                    <div class="stat-label">يتابع</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="my-posts-count">0</div>
+                    <div class="stat-label">منشورات</div>
+                </div>
+            </div>
+
+            <!-- طلبات المتابعة (تظهر فقط للحساب الخاص) -->
+            <div id="requests-section" style="display: none; margin: 10px 0; width: 100%;">
+                <button onclick="showFollowRequests()" class="btn-edit" style="position: relative; width: 100%;">
+                    <i class="fa-solid fa-user-clock"></i> طلبات المتابعة
+                    <span id="requests-count" class="requests-count" style="display: none;">0</span>
+                </button>
+            </div>
+
             <div class="profile-static-info">
                 <div class="info-item"><i class="fa-solid fa-cake-candles"></i> <span id="my-dob">--/--/----</span></div>
                 <div class="info-item"><i id="gender-icon" class="fa-solid fa-venus-mars"></i> <span id="my-gender">...</span></div>
             </div>
 
+            <!-- أزرار التحكم -->
             <div class="profile-actions">
-                <button onclick="openEditModal()" class="btn-edit">
-                    <i class="fa-regular fa-pen-to-square" style="margin-left: 5px;"></i>
-                    تعديل البيانات
-                </button>
+                <div class="profile-actions-row">
+                    <button onclick="openEditModal()" class="btn-edit">
+                        <i class="fa-regular fa-pen-to-square"></i>
+                        تعديل البيانات
+                    </button>
+                    
+                    <!-- زر إدارة المحظورين -->
+                    <a href="blocks.html" class="btn-edit btn-danger">
+                        <i class="fa-solid fa-ban"></i>
+                        المحظورين
+                    </a>
+                </div>
             </div>
         </section>
 
@@ -160,6 +326,7 @@
         <a href="myprofile.html" class="nav-item active"><i class="fa-solid fa-user"></i></a>
     </nav>
 
+    <!-- نافذة تعديل الملف الشخصي -->
     <div class="modal-overlay" id="modal-overlay" onclick="closeEditModal()"></div>
     <div id="edit-modal" class="edit-modal" style="display: none;">
         <h4>تعديل الملف الشخصي</h4>
@@ -168,6 +335,18 @@
         <div class="modal-buttons">
             <button onclick="saveProfile()" class="btn-primary">حفظ</button>
             <button onclick="closeEditModal()" class="cancel-btn">إلغاء</button>
+        </div>
+    </div>
+
+    <!-- نافذة طلبات المتابعة -->
+    <div class="modal-overlay" id="requests-overlay" onclick="closeRequestsModal()" style="display: none;"></div>
+    <div id="requests-modal" class="edit-modal" style="display: none; max-width: 500px;">
+        <h4>طلبات المتابعة</h4>
+        <div id="requests-list" style="max-height: 400px; overflow-y: auto;">
+            <p style="text-align: center; color: var(--secondary-text);">لا توجد طلبات متابعة</p>
+        </div>
+        <div class="modal-buttons">
+            <button onclick="closeRequestsModal()" class="cancel-btn">إغلاق</button>
         </div>
     </div>
 
@@ -200,6 +379,7 @@
         let currentUserData = null;
         let loadingTimeout = null;
 
+        // ==================== دوال مساعدة ====================
         function formatDate(timestamp) {
             if (!timestamp) return '';
             const date = new Date(timestamp);
@@ -237,6 +417,195 @@
             }, 3000);
         }
 
+        // ==================== إحصائيات المتابعة ====================
+        async function loadMyFollowCounts() {
+            if (!currentUser) return;
+            
+            try {
+                const followersSnapshot = await database.ref(`followers/${currentUser.uid}`).once('value');
+                const followersCount = followersSnapshot.exists() ? followersSnapshot.numChildren() : 0;
+                document.getElementById('my-followers-count').textContent = followersCount;
+                
+                const followingSnapshot = await database.ref(`following/${currentUser.uid}`).once('value');
+                const followingCount = followingSnapshot.exists() ? followingSnapshot.numChildren() : 0;
+                document.getElementById('my-following-count').textContent = followingCount;
+                
+            } catch (error) {
+                console.error('Error loading follow counts:', error);
+            }
+        }
+
+        window.showMyFollowers = () => {
+            Aulo.alert(`لديك ${document.getElementById('my-followers-count').textContent} متابع`);
+        };
+
+        window.showMyFollowing = () => {
+            Aulo.alert(`تتابع ${document.getElementById('my-following-count').textContent} شخص`);
+        };
+
+        // ==================== نظام الخصوصية ====================
+        window.setPrivacy = async (mode) => {
+            if (!currentUser) return;
+            
+            try {
+                await database.ref(`users/${currentUser.uid}`).update({
+                    privacy: mode
+                });
+                
+                currentUserData.privacy = mode;
+                updatePrivacyUI(mode);
+                
+                Aulo.snackbar(`الحساب الآن ${mode === 'public' ? 'عام' : 'خاص'}`);
+                
+            } catch (error) {
+                console.error('Error setting privacy:', error);
+                Aulo.snackbar('حدث خطأ', true);
+            }
+        };
+
+        function updatePrivacyUI(mode) {
+            const publicOption = document.getElementById('public-option');
+            const privateOption = document.getElementById('private-option');
+            const requestsSection = document.getElementById('requests-section');
+            
+            if (mode === 'public') {
+                publicOption.classList.add('active');
+                privateOption.classList.remove('active');
+                requestsSection.style.display = 'none';
+            } else {
+                publicOption.classList.remove('active');
+                privateOption.classList.add('active');
+                requestsSection.style.display = 'block';
+                loadFollowRequestsCount();
+            }
+        }
+
+        // ==================== طلبات المتابعة ====================
+        async function loadFollowRequestsCount() {
+            if (!currentUser) return;
+            
+            try {
+                const snapshot = await database.ref(`followRequests/${currentUser.uid}`).once('value');
+                const count = snapshot.exists() ? snapshot.numChildren() : 0;
+                
+                const requestsCount = document.getElementById('requests-count');
+                if (count > 0) {
+                    requestsCount.textContent = count;
+                    requestsCount.style.display = 'flex';
+                } else {
+                    requestsCount.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading requests count:', error);
+            }
+        }
+
+        window.showFollowRequests = async () => {
+            if (!currentUser) return;
+            
+            try {
+                const snapshot = await database.ref(`followRequests/${currentUser.uid}`).once('value');
+                const requests = [];
+                
+                snapshot.forEach((child) => {
+                    requests.push({ id: child.key, ...child.val() });
+                });
+                
+                const requestsList = document.getElementById('requests-list');
+                
+                if (requests.length === 0) {
+                    requestsList.innerHTML = '<p style="text-align: center; color: var(--secondary-text);">لا توجد طلبات متابعة</p>';
+                } else {
+                    requestsList.innerHTML = '';
+                    
+                    for (const req of requests) {
+                        const userSnapshot = await database.ref(`users/${req.userId}`).once('value');
+                        const userData = userSnapshot.val();
+                        
+                        const reqDiv = document.createElement('div');
+                        reqDiv.style.cssText = `
+                            display: flex;
+                            align-items: center;
+                            padding: 10px;
+                            border-bottom: 1px solid var(--border-color);
+                            gap: 10px;
+                        `;
+                        
+                        reqDiv.innerHTML = `
+                            <img src="${userData.avatar || 'images/profile.png'}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600;">${userData.displayName || userData.username}</div>
+                                <div style="font-size: 12px; color: var(--secondary-text);">@${userData.username}</div>
+                            </div>
+                            <div style="display: flex; gap: 5px;">
+                                <button onclick="acceptFollowRequest('${req.userId}')" style="background: var(--primary-color); color: white; border: none; padding: 5px 15px; border-radius: 20px; cursor: pointer;">قبول</button>
+                                <button onclick="rejectFollowRequest('${req.userId}')" style="background: #ff3b30; color: white; border: none; padding: 5px 15px; border-radius: 20px; cursor: pointer;">رفض</button>
+                            </div>
+                        `;
+                        
+                        requestsList.appendChild(reqDiv);
+                    }
+                }
+                
+                document.getElementById('requests-modal').style.display = 'block';
+                document.getElementById('requests-overlay').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading requests:', error);
+                Aulo.snackbar('حدث خطأ', true);
+            }
+        };
+
+        window.acceptFollowRequest = async (userId) => {
+            try {
+                await database.ref(`followers/${currentUser.uid}/${userId}`).set({
+                    uid: userId,
+                    timestamp: Date.now()
+                });
+                
+                await database.ref(`following/${userId}/${currentUser.uid}`).set({
+                    uid: currentUser.uid,
+                    timestamp: Date.now()
+                });
+                
+                await database.ref(`followRequests/${currentUser.uid}/${userId}`).remove();
+                
+                await database.ref(`notifications/${userId}`).push({
+                    type: 'follow_accepted',
+                    userId: currentUser.uid,
+                    timestamp: Date.now(),
+                    read: false
+                });
+                
+                Aulo.snackbar('تم قبول طلب المتابعة');
+                showFollowRequests();
+                loadFollowRequestsCount();
+                loadMyFollowCounts();
+                
+            } catch (error) {
+                console.error('Error accepting request:', error);
+                Aulo.snackbar('حدث خطأ', true);
+            }
+        };
+
+        window.rejectFollowRequest = async (userId) => {
+            try {
+                await database.ref(`followRequests/${currentUser.uid}/${userId}`).remove();
+                Aulo.snackbar('تم رفض الطلب');
+                showFollowRequests();
+                loadFollowRequestsCount();
+            } catch (error) {
+                console.error('Error rejecting request:', error);
+                Aulo.snackbar('حدث خطأ', true);
+            }
+        };
+
+        window.closeRequestsModal = () => {
+            document.getElementById('requests-modal').style.display = 'none';
+            document.getElementById('requests-overlay').style.display = 'none';
+        };
+
+        // ==================== تحميل الملف الشخصي ====================
         async function loadMyProfile() {
             const user = auth.currentUser;
             if (!user) {
@@ -265,6 +634,7 @@
                     currentUserData.bio || 'لا يوجد نبذة شخصية حالياً.';
                 document.getElementById('my-dob').textContent = 
                     formatBirthdate(currentUserData.birthdate);
+                document.getElementById('my-posts-count').textContent = currentUserData.postsCount || 0;
                 
                 const genderSpan = document.getElementById('my-gender');
                 const genderIcon = document.getElementById('gender-icon');
@@ -279,6 +649,15 @@
                     genderSpan.textContent = 'غير محدد';
                 }
 
+                // تحديث واجهة الخصوصية
+                if (currentUserData.privacy) {
+                    updatePrivacyUI(currentUserData.privacy);
+                } else {
+                    // افتراضي: عام
+                    await setPrivacy('public');
+                }
+
+                await loadMyFollowCounts();
                 await loadMyPosts();
 
                 document.getElementById('edit-display-name').value = 
@@ -292,6 +671,7 @@
             }
         }
 
+        // ==================== تحميل منشوراتي ====================
         async function loadMyPosts() {
             const feed = document.getElementById('my-posts-feed');
             
@@ -414,6 +794,7 @@
             }
         };
 
+        // ==================== تغيير الصورة الشخصية ====================
         document.getElementById('avatar-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -451,6 +832,7 @@
             }
         });
 
+        // ==================== تعديل الملف الشخصي ====================
         window.openEditModal = () => {
             document.getElementById('edit-modal').style.display = 'block';
             document.getElementById('modal-overlay').style.display = 'block';
@@ -488,6 +870,7 @@
             }
         };
 
+        // ==================== تسجيل الخروج ====================
         window.logout = async () => {
             try {
                 if (currentUser) {
@@ -504,6 +887,7 @@
             }
         };
 
+        // ==================== التحقق من حالة المصادقة ====================
         auth.onAuthStateChanged((user) => {
             if (user) {
                 loadMyProfile();

@@ -72,6 +72,9 @@
         .result-display-name {
             font-weight: 700;
             font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         .result-username {
             font-size: 13px;
@@ -134,6 +137,16 @@
         }
         .recent-item:hover {
             background: #e1e1e1;
+        }
+        
+        /* شارة المحظور */
+        .blocked-badge {
+            background: var(--error-color);
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-right: 5px;
         }
     </style>
 </head>
@@ -204,6 +217,7 @@
 
         let currentUser = null;
         let cachedUsers = [];
+        let blockedUsers = new Set();
 
         const searchInput = document.getElementById('user-search');
         const resultsContainer = document.getElementById('search-results');
@@ -211,6 +225,25 @@
         const searchHint = document.getElementById('search-hint');
         const recentSearches = document.getElementById('recent-searches');
         const recentList = document.getElementById('recent-list');
+
+        // ==================== تحميل قائمة المحظورين ====================
+        async function loadBlockedUsers() {
+            if (!currentUser) return;
+            
+            try {
+                const snapshot = await database.ref(`blocked/${currentUser.uid}`).once('value');
+                blockedUsers.clear();
+                
+                snapshot.forEach((child) => {
+                    blockedUsers.add(child.key);
+                });
+                
+                console.log('Blocked users loaded for search:', Array.from(blockedUsers));
+                
+            } catch (error) {
+                console.error('Error loading blocked users:', error);
+            }
+        }
 
         async function loadAllUsers() {
             if (cachedUsers.length > 0) return cachedUsers;
@@ -239,7 +272,11 @@
 
             query = query.toLowerCase().trim();
             
+            // فلترة: البحث في الاسم + استبعاد المحظورين
             return cachedUsers.filter(user => {
+                // استبعاد المحظورين
+                if (blockedUsers.has(user.uid)) return false;
+                
                 const username = (user.username || '').toLowerCase();
                 const displayName = (user.displayName || '').toLowerCase();
                 
@@ -271,7 +308,9 @@
                 resultItem.innerHTML = `
                     <img src="${user.avatar || 'images/profile.png'}" class="result-avatar" loading="lazy">
                     <div class="result-info">
-                        <span class="result-display-name">${user.displayName || user.username}</span>
+                        <span class="result-display-name">
+                            ${user.displayName || user.username}
+                        </span>
                         <span class="result-username">@${user.username}</span>
                         ${bio ? `<span class="result-bio">${bio}</span>` : ''}
                     </div>
@@ -363,9 +402,10 @@
             loadingSpinner.style.display = 'block';
             try {
                 await loadAllUsers();
+                await loadBlockedUsers();
                 loadingSpinner.style.display = 'none';
                 showRecentSearches();
-                console.log(`تم تحميل ${cachedUsers.length} مستخدم`);
+                console.log(`تم تحميل ${cachedUsers.length} مستخدم (بعد استبعاد المحظورين)`);
             } catch (error) {
                 console.error('Error initializing search:', error);
                 loadingSpinner.style.display = 'none';

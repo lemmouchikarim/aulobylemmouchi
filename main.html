@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* تحسينات إضافية لعرض المنشورات */
         .feed-container {
             display: flex;
             flex-direction: column;
@@ -69,7 +68,6 @@
             color: #333;
         }
 
-        /* نظام الميديا المتطور */
         .post-media-container {
             width: 100%;
             display: grid;
@@ -149,7 +147,6 @@
             object-fit: cover;
         }
 
-        /* مشغل الفيديو */
         .video-wrapper {
             position: relative;
             width: 100%;
@@ -180,11 +177,6 @@
             transition: background 0.2s;
         }
 
-        .video-mute-btn:hover {
-            background: rgba(0,0,0,0.8);
-        }
-
-        /* مشغل الصوت */
         .audio-player {
             background: #f8f8f8;
             margin: 10px 15px;
@@ -202,12 +194,6 @@
             cursor: pointer;
         }
 
-        .audio-player span {
-            font-size: 14px;
-            color: var(--text-color);
-        }
-
-        /* زر الإعجاب */
         .post-actions {
             padding: 12px 15px;
             display: flex;
@@ -252,7 +238,6 @@
             100% { transform: scale(1); }
         }
 
-        /* Skeleton Loading */
         .skeleton-card {
             background: #fff;
         }
@@ -288,7 +273,6 @@
             100% { background-position: 200% 0; }
         }
 
-        /* رسالة الخطأ */
         .error-container {
             text-align: center;
             padding: 50px 20px;
@@ -304,11 +288,6 @@
             opacity: 0.5;
         }
 
-        .error-container p {
-            color: var(--secondary-text);
-            margin-bottom: 20px;
-        }
-
         .retry-btn {
             background: var(--primary-color);
             color: white;
@@ -319,7 +298,6 @@
             cursor: pointer;
         }
 
-        /* مؤشر التحميل */
         .loading-more {
             text-align: center;
             padding: 20px;
@@ -329,6 +307,27 @@
         .loading-more i {
             color: var(--primary-color);
             margin-left: 5px;
+        }
+
+        /* رسالة المستخدم المحظور */
+        .blocked-post-placeholder {
+            text-align: center;
+            padding: 30px;
+            background: #fff1f0;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 1px solid var(--error-color);
+        }
+        
+        .blocked-post-placeholder i {
+            font-size: 40px;
+            color: var(--error-color);
+            margin-bottom: 10px;
+        }
+        
+        .blocked-post-placeholder p {
+            color: var(--text-color);
+            font-size: 14px;
         }
     </style>
 </head>
@@ -348,7 +347,6 @@
 
     <main class="container">
         <div id="feed" class="feed-container">
-            <!-- Skeleton loading -->
             <div class="post-card skeleton-card">
                 <div class="post-header">
                     <div class="skeleton-avatar"></div>
@@ -423,39 +421,51 @@
         let loading = false;
         let allPostsLoaded = false;
         const POSTS_PER_PAGE = 5;
+        let blockedUsers = new Set(); // تخزين المستخدمين المحظورين
 
-        // ==================== دوال مساعدة ====================
         function formatDate(timestamp) {
             if (!timestamp) return '';
             const date = new Date(timestamp);
             const now = new Date();
             const diff = now - date;
             
-            // أقل من دقيقة
             if (diff < 60000) {
                 return 'الآن';
             }
-            
-            // أقل من ساعة
             if (diff < 3600000) {
                 const mins = Math.floor(diff / 60000);
                 return `منذ ${mins} دقيقة`;
             }
-            
-            // أقل من 24 ساعة
             if (diff < 86400000) {
                 const hours = Math.floor(diff / 3600000);
                 return `منذ ${hours} ساعة`;
             }
-            
-            // تاريخ
             const day = date.getDate().toString().padStart(2, '0');
             const month = (date.getMonth() + 1).toString().padStart(2, '0');
             const year = date.getFullYear();
             return `${day}/${month}/${year}`;
         }
 
-        // ==================== تحميل المنشورات ====================
+        // ==================== تحميل قائمة المحظورين ====================
+        async function loadBlockedUsers() {
+            if (!currentUser) return;
+            
+            try {
+                const snapshot = await database.ref(`blocked/${currentUser.uid}`).once('value');
+                blockedUsers.clear();
+                
+                snapshot.forEach((child) => {
+                    blockedUsers.add(child.key);
+                });
+                
+                console.log('Blocked users loaded:', Array.from(blockedUsers));
+                
+            } catch (error) {
+                console.error('Error loading blocked users:', error);
+            }
+        }
+
+        // ==================== تحميل المنشورات مع استبعاد المحظورين ====================
         async function loadPosts(loadMore = false) {
             if (loading || allPostsLoaded) return;
             
@@ -464,25 +474,38 @@
             const loadingMore = document.getElementById('loading-more');
             
             if (!loadMore) {
-                // إظهار skeleton
                 feed.innerHTML = generateSkeletonCards(3);
                 lastPostTime = Date.now();
+                await loadBlockedUsers(); // تحديث قائمة المحظورين
             } else {
                 loadingMore.style.display = 'block';
             }
             
             try {
+                const followingSnapshot = await database.ref(`following/${currentUser.uid}`).once('value');
+                const following = [];
+                followingSnapshot.forEach((child) => {
+                    following.push(child.key);
+                });
+                following.push(currentUser.uid);
+
                 const postsRef = database.ref('posts')
                     .orderByChild('timestamp')
                     .endAt(lastPostTime)
                     .limitToLast(POSTS_PER_PAGE + 1);
                 
                 const snapshot = await postsRef.once('value');
-                const posts = [];
+                const allPosts = [];
                 
                 snapshot.forEach((child) => {
-                    posts.push({ id: child.key, ...child.val() });
+                    allPosts.push({ id: child.key, ...child.val() });
                 });
+
+                // فلترة: منشورات المتابعين فقط + استبعاد المحظورين
+                let posts = allPosts.filter(post => 
+                    following.includes(post.userId) && 
+                    !blockedUsers.has(post.userId)
+                );
                 
                 posts.reverse();
                 
@@ -490,7 +513,7 @@
                     allPostsLoaded = true;
                     loadingMore.style.display = 'none';
                 } else {
-                    posts.pop(); // إزالة العنصر الزائد
+                    posts.pop();
                     lastPostTime = posts[posts.length - 1].timestamp;
                 }
                 
@@ -502,15 +525,14 @@
                     feed.innerHTML = `
                         <div class="error-container">
                             <i class="fa-regular fa-newspaper"></i>
-                            <p>لا توجد منشورات بعد</p>
-                            <a href="post.html" style="color: var(--primary-color); text-decoration: none;">أنشر أول منشور الآن</a>
+                            <p>لا توجد منشورات من المتابعين</p>
+                            <a href="find.html" style="color: var(--primary-color);">ابحث عن أصدقاء</a>
                         </div>
                     `;
                     loading = false;
                     return;
                 }
                 
-                // تحميل بيانات المستخدمين للمنشورات
                 for (const post of posts) {
                     const userData = await getUserData(post.userId);
                     const isLiked = await checkIfLiked(post.id);
@@ -527,8 +549,6 @@
                             <button onclick="location.reload()" class="retry-btn">إعادة المحاولة</button>
                         </div>
                     `;
-                } else {
-                    Aulo.snackbar('خطأ في تحميل المزيد', { type: 'error' });
                 }
             } finally {
                 loading = false;
@@ -536,18 +556,15 @@
             }
         }
 
-        // ==================== جلب بيانات المستخدم ====================
         async function getUserData(userId) {
             try {
                 const snapshot = await database.ref(`users/${userId}`).once('value');
                 return snapshot.val() || {};
             } catch (error) {
-                console.error('Error fetching user data:', error);
                 return {};
             }
         }
 
-        // ==================== التحقق من الإعجاب ====================
         async function checkIfLiked(postId) {
             if (!currentUser) return false;
             try {
@@ -558,16 +575,13 @@
             }
         }
 
-        // ==================== إنشاء عنصر منشور ====================
         function createPostElement(post, userData, isLiked = false) {
             const postCard = document.createElement('div');
             postCard.className = 'post-card';
             postCard.dataset.postId = post.id;
             
-            // محتوى نصي
             const contentHTML = post.text ? `<div class="post-content">${post.text}</div>` : '';
             
-            // معالجة الوسائط
             let mediaHTML = '';
             if (post.media && post.media.length > 0) {
                 const gridClass = `media-grid-${Math.min(post.media.length, 5)}`;
@@ -601,7 +615,6 @@
                 mediaHTML += '</div>';
             }
             
-            // زر الإعجاب
             const likeClass = isLiked ? 'active' : '';
             const likeIcon = isLiked ? 'fa-solid' : 'fa-regular';
             
@@ -626,14 +639,12 @@
             return postCard;
         }
 
-        // ==================== فتح الوسائط ====================
         window.openMedia = (url, type) => {
             if (type === 'image') {
                 window.open(url, '_blank');
             }
         };
 
-        // ==================== كتم/تشغيل صوت الفيديو ====================
         window.toggleMute = (btn, event) => {
             event.stopPropagation();
             const video = btn.previousElementSibling;
@@ -648,7 +659,6 @@
             }
         };
 
-        // ==================== تبديل الإعجاب ====================
         window.toggleLike = async (postId, btn) => {
             if (!currentUser) {
                 window.location.href = 'index.html';
@@ -663,26 +673,21 @@
                 const post = postSnapshot.val();
                 
                 if (snapshot.exists()) {
-                    // إزالة الإعجاب
                     await likeRef.remove();
                     await postRef.update({ likes: (post.likes || 1) - 1 });
                     btn.classList.remove('active');
                     btn.querySelector('i').className = 'fa-regular fa-heart';
                     
-                    // تشغيل صوت الإعجاب
                     playSound('like');
                     
                 } else {
-                    // إضافة إعجاب
                     await likeRef.set({ userId: currentUser.uid, timestamp: Date.now() });
                     await postRef.update({ likes: (post.likes || 0) + 1 });
                     btn.classList.add('active');
                     btn.querySelector('i').className = 'fa-solid fa-heart';
                     
-                    // تشغيل صوت الإعجاب
                     playSound('like');
                     
-                    // إرسال إشعار لصاحب المنشور
                     if (post.userId !== currentUser.uid) {
                         await database.ref(`notifications/${post.userId}`).push({
                             type: 'like',
@@ -692,12 +697,10 @@
                             read: false
                         });
                         
-                        // تحديث النقطة الحمراء
                         updateNotificationDot();
                     }
                 }
                 
-                // تحديث عدد الإعجابات
                 const likeCountSpan = btn.nextElementSibling;
                 likeCountSpan.textContent = parseInt(likeCountSpan.textContent) + (snapshot.exists() ? -1 : 1);
                 
@@ -707,7 +710,6 @@
             }
         };
 
-        // ==================== تشغيل الصوت ====================
         function playSound(soundName) {
             try {
                 const audio = new Audio(`sounds/${soundName}.mp3`);
@@ -717,7 +719,6 @@
             }
         }
 
-        // ==================== توليد بطاقات Skeleton ====================
         function generateSkeletonCards(count) {
             let html = '';
             for (let i = 0; i < count; i++) {
@@ -737,7 +738,6 @@
             return html;
         }
 
-        // ==================== التحميل عند التمرير ====================
         window.addEventListener('scroll', () => {
             const trigger = document.getElementById('load-more-trigger');
             if (!trigger) return;
@@ -748,7 +748,6 @@
             }
         });
 
-        // ==================== تحديث نقطة الإشعارات ====================
         async function updateNotificationDot() {
             if (!currentUser) return;
             try {
@@ -767,7 +766,6 @@
             }
         }
 
-        // ==================== تشغيل الفيديو عند التمرير ====================
         function setupVideoAutoplay() {
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -790,14 +788,28 @@
             });
         }
 
-        // ==================== بدء التحميل ====================
+        // ==================== الاستماع للتغييرات في قائمة الحظر ====================
+        function setupBlockedListener() {
+            if (!currentUser) return;
+            
+            database.ref(`blocked/${currentUser.uid}`).on('value', (snapshot) => {
+                // تحديث قائمة المحظورين وإعادة تحميل المنشورات
+                loadBlockedUsers().then(() => {
+                    allPostsLoaded = false;
+                    lastPostTime = Date.now();
+                    loadPosts(false);
+                });
+            });
+        }
+
         auth.onAuthStateChanged((user) => {
             if (user) {
                 currentUser = user;
-                loadPosts(false);
+                loadBlockedUsers().then(() => {
+                    loadPosts(false);
+                    setupBlockedListener();
+                });
                 updateNotificationDot();
-                
-                // تشغيل الفيديو عند التمرير
                 setTimeout(setupVideoAutoplay, 1000);
             } else {
                 window.location.href = 'index.html';

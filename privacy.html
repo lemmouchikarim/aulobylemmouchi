@@ -48,6 +48,12 @@
             border-bottom: 1px solid var(--border-color);
         }
         
+        .legal-section h3 {
+            font-size: 16px;
+            color: var(--primary-color);
+            margin: 15px 0 10px;
+        }
+        
         .legal-section p {
             font-size: 14px;
             line-height: 1.8;
@@ -67,6 +73,37 @@
             margin-bottom: 5px;
         }
         
+        .legal-section .highlight {
+            background: #f8f0ff;
+            padding: 15px;
+            border-radius: 8px;
+            border-right: 4px solid var(--primary-color);
+            margin: 15px 0;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        
+        .data-table th {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px;
+            text-align: right;
+        }
+        
+        .data-table td {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .data-table tr:nth-child(even) {
+            background: #f8f8f8;
+        }
+        
         .back-btn {
             display: inline-flex;
             align-items: center;
@@ -79,6 +116,25 @@
         
         .back-btn:hover {
             text-decoration: underline;
+        }
+        
+        .contact-info {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        @media (max-width: 600px) {
+            .data-table {
+                font-size: 12px;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 5px;
+            }
         }
     </style>
 </head>
@@ -108,16 +164,34 @@
         
         <div class="legal-section">
             <h2>المعلومات التي نجمعها</h2>
-            <p>نقوم بجمع المعلومات التالية عند إنشاء الحساب:</p>
-            <ul>
-                <li>اسم المستخدم (username)</li>
-                <li>كلمة السر</li>
-                <li>تاريخ الميلاد</li>
-                <li>الجنس</li>
-                <li>الاسم المعروض (اختياري)</li>
-                <li>النبذة الشخصية (اختياري)</li>
-                <li>الصورة الشخصية (اختياري)</li>
-            </ul>
+            <p>نقوم بجمع المعلومات التالية عند إنشاء الحساب واستخدام التطبيق:</p>
+            
+            <table class="data-table">
+                <tr>
+                    <th>نوع المعلومات</th>
+                    <th>وصف</th>
+                </tr>
+                <tr>
+                    <td>معلومات الحساب</td>
+                    <td>اسم المستخدم، كلمة السر (مشفرة)، تاريخ الميلاد، الجنس</td>
+                </tr>
+                <tr>
+                    <td>معلومات الملف الشخصي</td>
+                    <td>الاسم المعروض، الصورة الشخصية، النبذة الشخصية (اختياري)</td>
+                </tr>
+                <tr>
+                    <td>المحتوى</td>
+                    <td>المنشورات، التعليقات، الإعجابات، المحادثات (مشفرة)</td>
+                </tr>
+                <tr>
+                    <td>معلومات الاستخدام</td>
+                    <td>آخر ظهور، حالة الاتصال، الوقت الذي تقضيه في التطبيق</td>
+                </tr>
+                <tr>
+                    <td>معلومات الجهاز</td>
+                    <td>نوع الجهاز، نظام التشغيل، المتصفح</td>
+                </tr>
+            </table>
         </div>
         
         <div class="legal-section">
@@ -125,30 +199,70 @@
             <ul>
                 <li>إنشاء وإدارة حسابك في Aulo</li>
                 <li>تمكينك من نشر المنشورات والتفاعل مع المستخدمين</li>
-                <li>تمكين المحادثات بين المستخدمين</li>
+                <li>تمكين المحادثات بين المستخدمين (مع تشفير End-to-End)</li>
                 <li>إرسال الإشعارات لك</li>
                 <li>تحسين وتطوير التطبيق</li>
+                <li>منع الاحتيال والأنشطة الضارة</li>
             </ul>
         </div>
         
         <div class="legal-section">
             <h2>مشاركة المعلومات</h2>
-            <p>معلومات ملفك الشخصي (الاسم المعروض، الصورة الشخصية، النبذة) تكون مرئية للمستخدمين الآخرين. لا نشارك معلوماتك مع أطراف ثالثة للأغراض التسويقية.</p>
+            <p>معلومات ملفك الشخصي (الاسم المعروض، الصورة الشخصية، النبذة) تكون مرئية للمستخدمين الآخرين حسب إعدادات الخصوصية الخاصة بك.</p>
+            <p>لا نشارك معلوماتك مع أطراف ثالثة للأغراض التسويقية. نستخدم خدمات موثوقة مثل:</p>
+            <ul>
+                <li><strong>Firebase</strong> - لتخزين البيانات والمصادقة</li>
+                <li><strong>Cloudinary</strong> - لتخزين وعرض الصور والفيديوهات</li>
+            </ul>
+        </div>
+        
+        <div class="legal-section">
+            <h2>التشفير</h2>
+            <div class="highlight">
+                <i class="fa-solid fa-lock" style="color: var(--primary-color);"></i>
+                <strong>تشفير End-to-End للمحادثات:</strong>
+                <p style="margin-top: 10px;">جميع المحادثات في Aulo مشفرة من طرف إلى طرف. هذا يعني أن الرسائل تُشفر على جهازك ولا يمكن فك تشفيرها إلا على جهاز المستلم. حتى نحن لا نستطيع قراءة محتوى المحادثات.</p>
+            </div>
         </div>
         
         <div class="legal-section">
             <h2>حماية المعلومات</h2>
-            <p>نستخدم Firebase لتأمين بياناتك. جميع البيانات مشفرة ومحمية وفق معايير الأمان المتبعة.</p>
+            <p>نستخدم Firebase لتأمين بياناتك. جميع البيانات مشفرة ومحمية وفق معايير الأمان المتبعة. نتخذ إجراءات أمنية مناسبة لحماية معلوماتك من الوصول غير المصرح به.</p>
+        </div>
+        
+        <div class="legal-section">
+            <h2>الاحتفاظ بالبيانات</h2>
+            <p>نحتفظ بمعلوماتك طالما كان حسابك نشطاً. يمكنك حذف حسابك في أي وقت، وسنقوم بحذف معلوماتك الشخصية خلال 30 يوماً، مع الاحتفاظ ببعض المعلومات للامتثال للالتزامات القانونية.</p>
         </div>
         
         <div class="legal-section">
             <h2>حقوقك</h2>
-            <p>يمكنك طلب تصحيح أو حذف بياناتك في أي وقت من خلال صفحة تعديل الملف الشخصي أو بالتواصل معنا.</p>
+            <ul>
+                <li><strong>حق الوصول:</strong> يمكنك طلب نسخة من معلوماتك الشخصية</li>
+                <li><strong>حق التصحيح:</strong> يمكنك تعديل معلوماتك من خلال صفحة الملف الشخصي</li>
+                <li><strong>حق الحذف:</strong> يمكنك حذف حسابك وبياناتك</li>
+                <li><strong>حق الاعتراض:</strong> يمكنك الاعتراض على معالجة بياناتك</li>
+            </ul>
         </div>
         
         <div class="legal-section">
-            <h2>اتصل بنا</h2>
-            <p>للتواصل بخصوص سياسة الخصوصية: lemmouchikarimecn@gmail.com</p>
+            <h2>ملفات تعريف الارتباط (Cookies)</h2>
+            <p>نستخدم ملفات تعريف الارتباط لتحسين تجربتك، مثل تذكر جلسة تسجيل الدخول الخاصة بك. يمكنك ضبط المتصفح لرفض جميع ملفات تعريف الارتباط، لكن قد لا تعمل بعض ميزات التطبيق بشكل صحيح.</p>
+        </div>
+        
+        <div class="legal-section">
+            <h2>خصوصية الأطفال</h2>
+            <p>تطبيق Aulo غير موجه للأطفال دون سن 13 سنة. لا نجمع عن قصد معلومات من أطفال دون 13 سنة. إذا اكتشفنا أننا جمعنا معلومات من طفل دون 13 سنة، سنقوم بحذفها فوراً.</p>
+        </div>
+        
+        <div class="legal-section">
+            <h2>التغييرات على سياسة الخصوصية</h2>
+            <p>قد نقوم بتحديث سياسة الخصوصية هذه من وقت لآخر. سنقوم بإشعارك بأي تغييرات جوهرية عن طريق البريد الإلكتروني أو من خلال التطبيق.</p>
+        </div>
+        
+        <div class="contact-info">
+            <p>للتواصل بخصوص سياسة الخصوصية:</p>
+            <p><i class="fa-regular fa-envelope" style="color: var(--primary-color);"></i> lemmouchikarimecn@gmail.com</p>
         </div>
     </main>
 

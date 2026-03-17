@@ -1,15 +1,10 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <link rel="icon" type="image/png" href="images/l.png">
-    <link rel="stylesheet" href="css/style.css">
-	<!-- أيقونات بأحجام مختلفة -->
-	<link rel="icon" type="image/png" sizes="16x16" href="images/l.png">
-	<link rel="icon" type="image/png" sizes="32x32" href="images/l.png">
-	<link rel="apple-touch-icon" href="images/l.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Aulo - المحادثات</title>
+    <link rel="icon" type="image/png" href="images/l.png">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -32,6 +27,11 @@
 
         .chat-item:active {
             background: #f9f9f9;
+        }
+
+        .chat-item.blocked {
+            opacity: 0.7;
+            background: #fff1f0;
         }
 
         .chat-avatar {
@@ -59,6 +59,18 @@
             font-weight: 700;
             font-size: 16px;
             color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .blocked-badge {
+            background: var(--error-color);
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-right: 5px;
         }
 
         .chat-time {
@@ -171,6 +183,87 @@
             top: 50%;
             transform: translateY(-50%);
             color: var(--secondary-text);
+        }
+
+        /* قائمة منسدلة للمحادثة */
+        .chat-item {
+            position: relative;
+        }
+        
+        .chat-menu-btn {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--secondary-text);
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+            z-index: 10;
+        }
+        
+        .chat-item:hover .chat-menu-btn {
+            opacity: 1;
+        }
+        
+        .chat-menu-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            left: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+            min-width: 150px;
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+        
+        .dropdown-menu.show {
+            display: block;
+        }
+        
+        .dropdown-item {
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+        }
+        
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown-item:hover {
+            background: #f8f8f8;
+        }
+        
+        .dropdown-item i {
+            width: 16px;
+            color: var(--secondary-text);
+        }
+        
+        .dropdown-item.block {
+            color: var(--error-color);
+        }
+        
+        .dropdown-item.block i {
+            color: var(--error-color);
         }
     </style>
 </head>
@@ -290,6 +383,111 @@
             }
         }
 
+        // ==================== قائمة منسدلة للمحادثة ====================
+        window.toggleChatMenu = (event, chatId, userId) => {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // إغلاق أي قائمة مفتوحة
+            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                menu.classList.remove('show');
+            });
+            
+            const menu = document.getElementById(`menu-${chatId}`);
+            if (menu) {
+                menu.classList.toggle('show');
+                
+                if (menu.classList.contains('show')) {
+                    setTimeout(() => {
+                        document.addEventListener('click', closeMenuOnClickOutside);
+                    }, 0);
+                }
+            }
+        };
+
+        function closeMenuOnClickOutside(event) {
+            if (!event.target.closest('.dropdown-menu') && !event.target.closest('.chat-menu-btn')) {
+                document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+                document.removeEventListener('click', closeMenuOnClickOutside);
+            }
+        }
+
+        // ==================== حظر من قائمة المحادثات ====================
+        window.blockFromChat = async (userId, event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            if (!currentUser || !userId) return;
+            
+            const confirmed = await Aulo.confirm(
+                'هل أنت متأكد من حظر هذا المستخدم؟',
+                {
+                    title: 'تأكيد الحظر',
+                    confirmText: 'حظر',
+                    cancelText: 'إلغاء'
+                }
+            );
+            
+            if (!confirmed) return;
+            
+            try {
+                // حذف المتابعة المتبادلة
+                await database.ref(`followers/${userId}/${currentUser.uid}`).remove();
+                await database.ref(`followers/${currentUser.uid}/${userId}`).remove();
+                await database.ref(`following/${userId}/${currentUser.uid}`).remove();
+                await database.ref(`following/${currentUser.uid}/${userId}`).remove();
+                
+                // حذف طلبات المتابعة
+                await database.ref(`followRequests/${userId}/${currentUser.uid}`).remove();
+                await database.ref(`followRequests/${currentUser.uid}/${userId}`).remove();
+                
+                // إضافة إلى قائمة الحظر
+                await database.ref(`blocked/${currentUser.uid}/${userId}`).set({
+                    timestamp: Date.now()
+                });
+                
+                // إرسال إشعار للمحظور
+                await database.ref(`notifications/${userId}`).push({
+                    type: 'blocked',
+                    userId: currentUser.uid,
+                    timestamp: Date.now(),
+                    read: false
+                });
+                
+                Aulo.snackbar('تم حظر المستخدم');
+                
+                // إعادة تحميل المحادثات
+                loadChats();
+                
+            } catch (error) {
+                console.error('Error blocking user:', error);
+                Aulo.snackbar('حدث خطأ', true);
+            }
+        };
+
+        window.unblockFromChat = async (userId, event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            if (!currentUser || !userId) return;
+            
+            try {
+                await database.ref(`blocked/${currentUser.uid}/${userId}`).remove();
+                
+                Aulo.snackbar('تم إلغاء الحظر');
+                
+                // إعادة تحميل المحادثات
+                loadChats();
+                
+            } catch (error) {
+                console.error('Error unblocking user:', error);
+                Aulo.snackbar('حدث خطأ', true);
+            }
+        };
+
+        // ==================== تحميل المحادثات مع التحقق من الحظر ====================
         function loadChats() {
             if (!currentUser) return;
 
@@ -334,6 +532,13 @@
 
                             if (!userData) continue;
 
+                            // التحقق من حالة الحظر
+                            const blockedSnapshot = await database.ref(`blocked/${currentUser.uid}/${otherUserId}`).once('value');
+                            const isBlocked = blockedSnapshot.exists();
+                            
+                            const blockedBySnapshot = await database.ref(`blocked/${otherUserId}/${currentUser.uid}`).once('value');
+                            const isBlockedBy = blockedBySnapshot.exists();
+
                             const unreadSnapshot = await database.ref(`messages/${chat.id}`)
                                 .orderByChild('read')
                                 .equalTo(false)
@@ -341,7 +546,9 @@
                             
                             let unreadCount = 0;
                             unreadSnapshot.forEach((msg) => {
-                                if (msg.val().senderId !== currentUser.uid) unreadCount++;
+                                if (msg.val().senderId !== currentUser.uid) {
+                                    unreadCount++;
+                                }
                             });
 
                             const lastMessageSnapshot = await database.ref(`messages/${chat.id}`)
@@ -354,7 +561,7 @@
                                 lastMessage = msg.val();
                             });
 
-                            const chatElement = createChatElement(chat, userData, otherUserId, unreadCount, lastMessage);
+                            const chatElement = createChatElement(chat, userData, otherUserId, unreadCount, lastMessage, isBlocked, isBlockedBy);
                             chatsList.appendChild(chatElement);
 
                         } catch (error) {
@@ -364,28 +571,61 @@
                 });
         }
 
-        function createChatElement(chat, userData, otherUserId, unreadCount, lastMessage) {
+        function createChatElement(chat, userData, otherUserId, unreadCount, lastMessage, isBlocked, isBlockedBy) {
             const div = document.createElement('a');
             div.href = `chat.html?id=${otherUserId}`;
-            div.className = 'chat-item';
+            div.className = `chat-item ${isBlocked || isBlockedBy ? 'blocked' : ''}`;
 
             const isOnline = userData.online || false;
-            const messagePreview = getMessagePreview(lastMessage);
+            let messagePreview = getMessagePreview(lastMessage);
+            
+            if (isBlocked) {
+                messagePreview = '🚫 لقد حظرت هذا المستخدم';
+            } else if (isBlockedBy) {
+                messagePreview = '🚫 هذا المستخدم حظرك';
+            }
+
+            // قائمة منسدلة
+            const menuId = `menu-${chat.id}`;
+            const blockAction = isBlocked 
+                ? `<div class="dropdown-item" onclick="unblockFromChat('${otherUserId}', event)"><i class="fa-solid fa-ban"></i> إلغاء الحظر</div>`
+                : `<div class="dropdown-item block" onclick="blockFromChat('${otherUserId}', event)"><i class="fa-solid fa-ban"></i> حظر</div>`;
 
             div.innerHTML = `
                 <img src="${userData.avatar || 'images/profile.png'}" class="chat-avatar">
-                ${isOnline ? '<span class="online-indicator"></span>' : ''}
+                ${isOnline && !isBlocked && !isBlockedBy ? '<span class="online-indicator"></span>' : ''}
                 <div class="chat-info">
                     <div class="chat-top">
-                        <span class="chat-name">${userData.displayName || userData.username || 'مستخدم'}</span>
+                        <span class="chat-name">
+                            ${userData.displayName || userData.username || 'مستخدم'}
+                            ${(isBlocked || isBlockedBy) ? '<span class="blocked-badge">محظور</span>' : ''}
+                        </span>
                         <span class="chat-time">${formatTime(chat.lastMessageTime)}</span>
                     </div>
                     <div class="chat-last-message">
-                        ${lastMessage && lastMessage.senderId === currentUser.uid ? '<i class="fa-solid fa-check"></i>' : ''}
+                        ${lastMessage && lastMessage.senderId === currentUser.uid && !isBlocked && !isBlockedBy ? '<i class="fa-solid fa-check"></i>' : ''}
                         <span>${messagePreview}</span>
                     </div>
                 </div>
-                ${unreadCount > 0 ? `<div class="unread-badge">${unreadCount}</div>` : ''}
+                ${unreadCount > 0 && !isBlocked && !isBlockedBy ? `<div class="unread-badge">${unreadCount}</div>` : ''}
+                
+                <!-- زر القائمة المنسدلة -->
+                <div class="chat-menu-btn" onclick="toggleChatMenu(event, '${chat.id}', '${otherUserId}')">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                </div>
+                
+                <!-- القائمة المنسدلة -->
+                <div class="dropdown-menu" id="${menuId}">
+                    <div class="dropdown-item" onclick="event.stopPropagation(); window.location.href='profile.html?id=${otherUserId}'">
+                        <i class="fa-solid fa-user"></i>
+                        <span>الملف الشخصي</span>
+                    </div>
+                    ${blockAction}
+                    <div class="dropdown-item" onclick="event.stopPropagation(); Aulo.alert('تم إرسال البلاغ')">
+                        <i class="fa-solid fa-flag"></i>
+                        <span>إبلاغ</span>
+                    </div>
+                </div>
             `;
 
             return div;

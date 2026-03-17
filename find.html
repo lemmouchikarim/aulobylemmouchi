@@ -12,9 +12,8 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="images/l.png">
     
-    <!-- Font Awesome متأخر -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
         :root {
@@ -179,29 +178,6 @@
             font-size: 24px;
         }
         
-        .recent-searches {
-            margin-top: 20px;
-        }
-        
-        .recent-title {
-            font-size: 14px;
-            color: var(--secondary-text);
-            margin-bottom: 10px;
-        }
-        
-        .recent-item {
-            display: inline-block;
-            background: #f1f1f1;
-            padding: 5px 15px;
-            border-radius: 20px;
-            margin-left: 8px;
-            margin-bottom: 8px;
-            font-size: 13px;
-            cursor: pointer;
-        }
-        
-        .recent-item:hover { background: #e1e1e1; }
-        
         .snackbar {
             position: fixed;
             bottom: 80px;
@@ -234,11 +210,6 @@
             </div>
         </div>
         
-        <div id="recent-searches" class="recent-searches" style="display: none;">
-            <div class="recent-title">عمليات البحث الأخيرة</div>
-            <div id="recent-list"></div>
-        </div>
-        
         <div id="search-results" class="results-container"></div>
         
         <div id="loading-spinner" class="loading-spinner" style="display: none;">
@@ -261,148 +232,41 @@
     <div id="snackbar" class="snackbar"></div>
     
     <!-- Firebase -->
-    <script defer src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
-    <script defer src="js/firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
     
     <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZj9QplNw-VmwSl8Ijv_b6nIi4ghcHDms",
+            authDomain: "aulobylemmouchi.firebaseapp.com",
+            databaseURL: "https://aulobylemmouchi-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "aulobylemmouchi",
+            storageBucket: "aulobylemmouchi.firebasestorage.app",
+            messagingSenderId: "63959796567",
+            appId: "1:63959796567:web:5cb2b14ca64cc01b6d4c12"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
         let currentUser = null;
-        let cachedUsers = [];
-        let blockedUsers = new Set();
         let searchTimeout = null;
         
         const searchInput = document.getElementById('user-search');
         const resultsContainer = document.getElementById('search-results');
         const loadingSpinner = document.getElementById('loading-spinner');
         const searchHint = document.getElementById('search-hint');
-        const recentSearches = document.getElementById('recent-searches');
-        const recentList = document.getElementById('recent-list');
-        
+        const snackbar = document.getElementById('snackbar');
+
         function showMessage(text, isError = false) {
-            const msg = document.getElementById('snackbar');
-            msg.textContent = text;
-            msg.style.background = isError ? '#ff3b30' : '#333';
-            msg.style.display = 'block';
-            setTimeout(() => msg.style.display = 'none', 3000);
+            snackbar.textContent = text;
+            snackbar.style.background = isError ? '#ff3b30' : '#333';
+            snackbar.style.display = 'block';
+            setTimeout(() => snackbar.style.display = 'none', 3000);
         }
-        
-        // تحميل جميع المستخدمين (مرة واحدة)
-        async function loadAllUsers() {
-            if (cachedUsers.length > 0) return cachedUsers;
-            
-            try {
-                const snapshot = await database.ref('users').once('value');
-                const users = [];
-                
-                snapshot.forEach(child => {
-                    const user = child.val();
-                    if (user.uid !== currentUser?.uid) {
-                        users.push(user);
-                    }
-                });
-                
-                cachedUsers = users;
-                return users;
-            } catch (error) {
-                console.error('Error loading users:', error);
-                return [];
-            }
-        }
-        
-        // تحميل المحظورين
-        async function loadBlockedUsers() {
-            if (!currentUser) return;
-            try {
-                const snapshot = await database.ref(`blocked/${currentUser.uid}`).once('value');
-                blockedUsers.clear();
-                snapshot.forEach(child => blockedUsers.add(child.key));
-            } catch (error) {
-                console.error('Error loading blocked users:', error);
-            }
-        }
-        
-        // البحث في المستخدمين
-        function searchUsers(query) {
-            if (!query || query.length < 2) return [];
-            
-            query = query.toLowerCase().trim();
-            
-            return cachedUsers.filter(user => {
-                if (blockedUsers.has(user.uid)) return false;
-                
-                const username = (user.username || '').toLowerCase();
-                const displayName = (user.displayName || '').toLowerCase();
-                
-                return username.includes(query) || displayName.includes(query);
-            });
-        }
-        
-        // عرض النتائج
-        function displayResults(users) {
-            resultsContainer.innerHTML = '';
-            
-            if (users.length === 0) {
-                resultsContainer.innerHTML = `
-                    <div class="no-results">
-                        <i class="fa-regular fa-face-frown"></i>
-                        <p>لا توجد نتائج</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            users.forEach(user => {
-                const item = document.createElement('a');
-                item.href = `profile.html?id=${user.uid}`;
-                item.className = 'user-result-item';
-                
-                item.innerHTML = `
-                    <img src="${user.avatar || 'images/profile.png'}" class="result-avatar" loading="lazy">
-                    <div class="result-info">
-                        <span class="result-display-name">${user.displayName || user.username}</span>
-                        <span class="result-username">@${user.username}</span>
-                    </div>
-                `;
-                
-                resultsContainer.appendChild(item);
-            });
-        }
-        
-        // حفظ البحث الأخير
-        function saveRecentSearch(query) {
-            let recents = JSON.parse(localStorage.getItem('recentSearches') || '[]');
-            recents = recents.filter(q => q !== query);
-            recents.unshift(query);
-            recents = recents.slice(0, 5);
-            localStorage.setItem('recentSearches', JSON.stringify(recents));
-            showRecentSearches();
-        }
-        
-        // عرض البحوث الأخيرة
-        function showRecentSearches() {
-            const recents = JSON.parse(localStorage.getItem('recentSearches') || '[]');
-            
-            if (recents.length === 0) {
-                recentSearches.style.display = 'none';
-                return;
-            }
-            
-            recentList.innerHTML = '';
-            recents.forEach(query => {
-                const item = document.createElement('span');
-                item.className = 'recent-item';
-                item.textContent = query;
-                item.onclick = () => {
-                    searchInput.value = query;
-                    performSearch(query);
-                };
-                recentList.appendChild(item);
-            });
-            
-            recentSearches.style.display = 'block';
-        }
-        
+
         // تنفيذ البحث
         async function performSearch(query) {
             if (!query || query.length < 2) {
@@ -410,19 +274,74 @@
                 resultsContainer.innerHTML = '';
                 return;
             }
-            
+
             loadingSpinner.style.display = 'block';
             searchHint.style.display = 'none';
-            recentSearches.style.display = 'none';
             
-            setTimeout(() => {
-                const results = searchUsers(query);
+            try {
+                // جلب جميع المستخدمين
+                const snapshot = await database.ref('users').once('value');
+                const users = [];
+                
+                // جلب المحظورين
+                let blockedUsers = new Set();
+                if (currentUser) {
+                    const blockedSnapshot = await database.ref(`blocked/${currentUser.uid}`).once('value');
+                    blockedSnapshot.forEach(child => blockedUsers.add(child.key));
+                }
+                
+                const queryLower = query.toLowerCase();
+                
+                snapshot.forEach((child) => {
+                    const user = child.val();
+                    // استبعاد المستخدم الحالي والمحظورين
+                    if (user.uid !== currentUser?.uid && !blockedUsers.has(user.uid)) {
+                        const username = (user.username || '').toLowerCase();
+                        const displayName = (user.displayName || '').toLowerCase();
+                        
+                        if (username.includes(queryLower) || displayName.includes(queryLower)) {
+                            users.push(user);
+                        }
+                    }
+                });
+                
                 loadingSpinner.style.display = 'none';
-                displayResults(results);
-                if (query.length >= 2) saveRecentSearch(query);
-            }, 300);
+                
+                if (users.length === 0) {
+                    resultsContainer.innerHTML = `
+                        <div class="no-results">
+                            <i class="fa-regular fa-face-frown"></i>
+                            <p>لا توجد نتائج</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // عرض النتائج
+                resultsContainer.innerHTML = '';
+                users.forEach(user => {
+                    const item = document.createElement('a');
+                    item.href = `profile.html?id=${user.uid}`;
+                    item.className = 'user-result-item';
+                    
+                    item.innerHTML = `
+                        <img src="${user.avatar || 'images/profile.png'}" class="result-avatar" loading="lazy">
+                        <div class="result-info">
+                            <span class="result-display-name">${user.displayName || user.username}</span>
+                            <span class="result-username">@${user.username}</span>
+                        </div>
+                    `;
+                    
+                    resultsContainer.appendChild(item);
+                });
+                
+            } catch (error) {
+                console.error('Error searching users:', error);
+                loadingSpinner.style.display = 'none';
+                resultsContainer.innerHTML = '<div class="no-results">حدث خطأ في البحث</div>';
+            }
         }
-        
+
         // مستمع الإدخال
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim();
@@ -432,45 +351,19 @@
             if (query.length < 2) {
                 resultsContainer.innerHTML = '';
                 searchHint.style.display = 'block';
-                showRecentSearches();
                 return;
             }
             
             searchTimeout = setTimeout(() => performSearch(query), 500);
         });
-        
-        searchInput.addEventListener('focus', () => {
-            if (searchInput.value.trim().length < 2) {
-                showRecentSearches();
-            }
-        });
-        
-        // التهيئة
-        async function initialize() {
-            loadingSpinner.style.display = 'block';
-            try {
-                await loadAllUsers();
-                await loadBlockedUsers();
-                loadingSpinner.style.display = 'none';
-                showRecentSearches();
-            } catch (error) {
-                loadingSpinner.style.display = 'none';
-            }
-        }
-        
+
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
-                initialize();
             } else {
                 window.location.href = 'index.html';
             }
         });
     </script>
-	<script>
-	if ('serviceWorker' in navigator) {
-		navigator.serviceWorker.register('/firebase-messaging-sw.js');
-	}
-	</script>
 </body>
 </html>

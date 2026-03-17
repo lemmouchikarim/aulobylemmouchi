@@ -5,17 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aulo - الرئيسية</title>
     
-    <!-- Preconnect للخدمات الخارجية -->
+    <!-- Preconnect -->
     <link rel="preconnect" href="https://aulobylemmouchi-default-rtdb.europe-west1.firebasedatabase.app">
     <link rel="preconnect" href="https://www.gstatic.com">
-    <link rel="dns-prefetch" href="https://firebase.googleapis.com">
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="images/l.png">
     
-    <!-- Font Awesome متأخر -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
         :root {
@@ -24,6 +22,7 @@
             --secondary-text: #757575;
             --border-color: #f0f0f0;
             --skeleton-bg: #eeeeee;
+            --error-color: #ff3b30;
         }
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -46,12 +45,9 @@
             padding: 0 15px;
             border-bottom: 1px solid var(--border-color);
             z-index: 100;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         
         .logo-container img { height: 35px; cursor: pointer; }
-        
-        .header-actions { position: relative; }
         
         .not-icon { position: relative; cursor: pointer; }
         
@@ -89,7 +85,6 @@
             color: var(--secondary-text);
             font-size: 24px;
             text-decoration: none;
-            transition: color 0.2s;
         }
         
         .nav-item.active { color: var(--primary-color); }
@@ -101,10 +96,7 @@
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            transition: transform 0.2s;
         }
-        
-        .post-card:active { transform: scale(0.98); }
         
         .post-header {
             display: flex;
@@ -169,10 +161,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.2s;
         }
-        
-        .like-btn:hover { background: rgba(160,24,203,0.1); }
         
         .like-btn.active { color: var(--primary-color); }
         
@@ -183,8 +172,6 @@
         }
         
         /* Skeleton Loading */
-        .skeleton-card { background: white; }
-        
         .skeleton {
             background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
             background-size: 200% 100%;
@@ -200,12 +187,6 @@
             width: 45px;
             height: 45px;
             border-radius: 50%;
-        }
-        
-        .skeleton-text {
-            height: 12px;
-            border-radius: 4px;
-            margin-bottom: 8px;
         }
         
         .skeleton-media {
@@ -225,7 +206,6 @@
             font-size: 14px;
             display: none;
             z-index: 1000;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         
         .empty-state {
@@ -234,13 +214,6 @@
             color: var(--secondary-text);
             background: white;
             border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        
-        .empty-state i {
-            font-size: 50px;
-            margin-bottom: 15px;
-            opacity: 0.3;
         }
     </style>
 </head>
@@ -251,7 +224,7 @@
         </div>
         <div class="header-actions">
             <a href="not.html" class="not-icon">
-                <i class="fa-regular fa-bell" style="font-size: 22px; color: var(--text-color);"></i>
+                <i class="fa-regular fa-bell"></i>
                 <div id="not-dot" class="not-dot" style="display: none;"></div>
             </a>
         </div>
@@ -260,32 +233,12 @@
     <main class="container">
         <div id="feed" class="feed-container">
             <!-- Skeleton loading -->
-            <div class="post-card skeleton-card">
+            <div class="post-card">
                 <div class="post-header">
                     <div class="skeleton skeleton-avatar"></div>
                     <div style="flex:1">
-                        <div class="skeleton skeleton-text" style="width:120px;"></div>
-                        <div class="skeleton skeleton-text" style="width:80px;"></div>
-                    </div>
-                </div>
-                <div class="skeleton skeleton-media"></div>
-            </div>
-            <div class="post-card skeleton-card">
-                <div class="post-header">
-                    <div class="skeleton skeleton-avatar"></div>
-                    <div style="flex:1">
-                        <div class="skeleton skeleton-text" style="width:120px;"></div>
-                        <div class="skeleton skeleton-text" style="width:80px;"></div>
-                    </div>
-                </div>
-                <div class="skeleton skeleton-media"></div>
-            </div>
-            <div class="post-card skeleton-card">
-                <div class="post-header">
-                    <div class="skeleton skeleton-avatar"></div>
-                    <div style="flex:1">
-                        <div class="skeleton skeleton-text" style="width:120px;"></div>
-                        <div class="skeleton skeleton-text" style="width:80px;"></div>
+                        <div class="skeleton" style="height:12px; width:120px; margin-bottom:8px;"></div>
+                        <div class="skeleton" style="height:10px; width:80px;"></div>
                     </div>
                 </div>
                 <div class="skeleton skeleton-media"></div>
@@ -306,14 +259,25 @@
     <div id="snackbar" class="snackbar"></div>
     
     <!-- Firebase -->
-    <script defer src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
     
-    <!-- ملفاتنا المحسنة -->
-    <script defer src="js/firebase-config.js"></script>
     <script>
-        // ==================== متغيرات عامة ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZj9QplNw-VmwSl8Ijv_b6nIi4ghcHDms",
+            authDomain: "aulobylemmouchi.firebaseapp.com",
+            databaseURL: "https://aulobylemmouchi-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "aulobylemmouchi",
+            storageBucket: "aulobylemmouchi.firebasestorage.app",
+            messagingSenderId: "63959796567",
+            appId: "1:63959796567:web:5cb2b14ca64cc01b6d4c12"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+
         let currentUser = null;
         let lastPostTime = Date.now();
         let loading = false;
@@ -344,7 +308,15 @@
             return `${day}/${month}/${year}`;
         }
         
-        // ==================== تحميل المنشورات (محسن) ====================
+        async function getUserData(userId) {
+            try {
+                const snapshot = await database.ref(`users/${userId}`).once('value');
+                return snapshot.val() || {};
+            } catch (error) {
+                return {};
+            }
+        }
+        
         async function loadPosts(loadMore = false) {
             if (loading || allPostsLoaded) return;
             
@@ -352,47 +324,32 @@
             const feed = document.getElementById('feed');
             
             try {
-                let query = database.ref('posts')
+                const snapshot = await database.ref('posts')
                     .orderByChild('timestamp')
-                    .limitToLast(POSTS_PER_PAGE + 1);
-                
-                if (loadMore) {
-                    query = query.endAt(lastPostTime);
-                }
-                
-                // استخدام once() بدلاً من on() - تحسين كبير
-                const snapshot = await query.once('value');
+                    .limitToLast(POSTS_PER_PAGE + (loadMore ? 0 : 1))
+                    .once('value');
                 
                 const posts = [];
                 snapshot.forEach(child => posts.push({ id: child.key, ...child.val() }));
                 posts.reverse();
                 
-                if (posts.length <= POSTS_PER_PAGE) {
+                if (posts.length === 0 && !loadMore) {
+                    feed.innerHTML = '<div class="empty-state"><i class="fa-regular fa-newspaper"></i><p>لا توجد منشورات بعد</p></div>';
                     allPostsLoaded = true;
-                } else {
-                    posts.pop();
-                    lastPostTime = posts[posts.length - 1].timestamp;
+                    loading = false;
+                    return;
+                }
+                
+                if (posts.length < POSTS_PER_PAGE) {
+                    allPostsLoaded = true;
                 }
                 
                 if (!loadMore) {
                     feed.innerHTML = '';
                 }
                 
-                if (posts.length === 0 && !loadMore) {
-                    feed.innerHTML = '<div class="empty-state"><i class="fa-regular fa-newspaper"></i><p>لا توجد منشورات بعد</p></div>';
-                    return;
-                }
-                
-                // تحميل بيانات المستخدمين مرة واحدة
-                const userIds = [...new Set(posts.map(p => p.userId))];
-                const users = await Promise.all(
-                    userIds.map(uid => db.getUser(uid))
-                );
-                const userMap = {};
-                userIds.forEach((uid, i) => userMap[uid] = users[i] || {});
-                
-                posts.forEach(post => {
-                    const user = userMap[post.userId] || {};
+                for (const post of posts) {
+                    const userData = await getUserData(post.userId);
                     const postCard = document.createElement('div');
                     postCard.className = 'post-card';
                     
@@ -408,9 +365,9 @@
                     
                     postCard.innerHTML = `
                         <div class="post-header" onclick="location.href='profile.html?id=${post.userId}'">
-                            <img src="${user.avatar || 'images/profile.png'}" class="user-avatar" loading="lazy">
+                            <img src="${userData.avatar || 'images/profile.png'}" class="user-avatar" loading="lazy">
                             <div>
-                                <div class="display-name">${user.displayName || user.username || 'مستخدم'}</div>
+                                <div class="display-name">${userData.displayName || userData.username || 'مستخدم'}</div>
                                 <div class="post-time">${formatDate(post.timestamp)}</div>
                             </div>
                         </div>
@@ -425,45 +382,47 @@
                     `;
                     
                     feed.appendChild(postCard);
-                });
+                }
                 
             } catch (error) {
                 console.error('Error loading posts:', error);
                 if (!loadMore) {
-                    feed.innerHTML = '<div class="empty-state"><i class="fa-solid fa-circle-exclamation"></i><p>خطأ في تحميل المنشورات</p><button onclick="location.reload()" style="background:var(--primary-color);color:white;border:none;padding:10px 20px;border-radius:25px;margin-top:10px;cursor:pointer;">إعادة المحاولة</button></div>';
+                    feed.innerHTML = '<div class="empty-state"><i class="fa-solid fa-circle-exclamation"></i><p>خطأ في تحميل المنشورات</p></div>';
                 }
             } finally {
                 loading = false;
             }
         }
         
-        // ==================== تبديل الإعجاب ====================
         window.toggleLike = async (postId, btn) => {
-            if (!currentUser) {
-                window.location.href = 'index.html';
-                return;
-            }
+            if (!currentUser) return;
             
             try {
-                const isLiked = await db.toggleLike(postId, currentUser.uid);
+                const likeRef = database.ref(`likes/${postId}/${currentUser.uid}`);
+                const snapshot = await likeRef.once('value');
+                const postRef = database.ref(`posts/${postId}`);
+                const postSnapshot = await postRef.once('value');
+                const post = postSnapshot.val();
                 
-                if (isLiked) {
-                    btn.classList.add('active');
-                    btn.innerHTML = '<i class="fa-solid fa-heart"></i>';
-                } else {
+                if (snapshot.exists()) {
+                    await likeRef.remove();
+                    await postRef.update({ likes: (post.likes || 1) - 1 });
                     btn.classList.remove('active');
                     btn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+                } else {
+                    await likeRef.set({ timestamp: Date.now() });
+                    await postRef.update({ likes: (post.likes || 0) + 1 });
+                    btn.classList.add('active');
+                    btn.innerHTML = '<i class="fa-solid fa-heart"></i>';
                 }
                 
-                const countSpan = btn.nextElementSibling;
-                countSpan.textContent = parseInt(countSpan.textContent) + (isLiked ? 1 : -1);
+                btn.nextElementSibling.textContent = parseInt(btn.nextElementSibling.textContent) + (snapshot.exists() ? -1 : 1);
                 
             } catch (error) {
                 console.error('Error toggling like:', error);
             }
         };
         
-        // ==================== مراقبة التمرير للتحميل الإضافي ====================
         window.addEventListener('scroll', () => {
             const trigger = document.getElementById('load-more-trigger');
             if (!trigger) return;
@@ -474,65 +433,14 @@
             }
         });
         
-        // ==================== تحديث نقطة الإشعارات ====================
-        async function updateNotificationDot() {
-            if (!currentUser) return;
-            try {
-                const count = await db.getUnreadNotificationsCount(currentUser.uid);
-                const dot = document.getElementById('not-dot');
-                if (dot) dot.style.display = count > 0 ? 'block' : 'none';
-            } catch (error) {
-                console.error('Error checking notifications:', error);
-            }
-        }
-        
-        // ==================== بدء التحميل ====================
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
                 loadPosts(false);
-                updateNotificationDot();
             } else {
                 window.location.href = 'index.html';
             }
         });
     </script>
-	<!-- أضف هذا السطر في نهاية body في main.html -->
-	<script>
-	// تسجيل Service Worker
-	if ('serviceWorker' in navigator) {
-		navigator.serviceWorker.register('/firebase-messaging-sw.js')
-			.then(reg => console.log('Service Worker registered'))
-			.catch(err => console.log('Service Worker error:', err));
-	}
-	</script>
-
-	<!-- واستبدل دالة toggleLike الموجودة بهذه -->
-	<script>
-	window.toggleLike = async (postId, btn) => {
-		if (!currentUser) {
-			window.location.href = 'index.html';
-			return;
-		}
-		
-		try {
-			const isLiked = await db.toggleLike(postId, currentUser.uid);
-			
-			if (isLiked) {
-				btn.classList.add('active');
-				btn.innerHTML = '<i class="fa-solid fa-heart"></i>';
-			} else {
-				btn.classList.remove('active');
-				btn.innerHTML = '<i class="fa-regular fa-heart"></i>';
-			}
-			
-			const countSpan = btn.nextElementSibling;
-			countSpan.textContent = parseInt(countSpan.textContent) + (isLiked ? 1 : -1);
-			
-		} catch (error) {
-			console.error('Error toggling like:', error);
-		}
-	};
-	</script>
 </body>
 </html>

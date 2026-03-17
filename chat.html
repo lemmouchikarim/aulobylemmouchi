@@ -7,11 +7,17 @@
     <link rel="icon" type="image/png" href="images/l.png">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <!-- مكتبة التشفير CryptoJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    
     <!-- معالج وسائط الدردشة -->
     <script src="js/chatMediaProcessor.js"></script>
     <script src="js/uploadManager.js"></script>
+    
+    <!-- التخزين المحلي -->
+    <script src="js/chat-offline.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -177,23 +183,6 @@
             background: #f5f5f5;
         }
 
-        /* حاوية الرسالة الفردية */
-        .message-container {
-            position: relative;
-            width: 100%;
-            transition: background-color 0.2s;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        .message-container.swipe-active {
-            background-color: rgba(160, 24, 203, 0.05);
-        }
-
-        .message-container.replying {
-            background-color: rgba(160, 24, 203, 0.1);
-        }
-
         /* فاصل التاريخ */
         .date-separator {
             text-align: center;
@@ -229,8 +218,6 @@
             display: flex;
             flex-direction: column;
             max-width: 75%;
-            cursor: pointer;
-            transition: transform 0.1s;
         }
 
         .message-wrapper.sent {
@@ -241,17 +228,12 @@
             align-self: flex-start;
         }
 
-        .message-wrapper.swiping {
-            opacity: 0.8;
-        }
-
         .message-bubble {
             padding: 12px 16px;
             font-size: 14px;
             line-height: 1.5;
             word-wrap: break-word;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            position: relative;
         }
 
         .sent .message-bubble {
@@ -266,7 +248,14 @@
             border-radius: 20px 20px 20px 4px;
         }
 
-        /* الرسالة المقتبسة داخل الفقاعة */
+        /* أيقونة القفل للرسائل المشفرة */
+        .encrypted-icon {
+            font-size: 12px;
+            margin-left: 4px;
+            opacity: 0.8;
+        }
+
+        /* الرسالة المقتبسة */
         .quoted-message {
             background: rgba(255,255,255,0.1);
             border-radius: 8px;
@@ -282,12 +271,6 @@
             margin-bottom: 3px;
             font-size: 11px;
             color: var(--primary-color);
-        }
-
-        .quoted-message .message-content {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         /* شريط الرد */
@@ -327,14 +310,6 @@
             margin-bottom: 3px;
         }
 
-        .reply-info .reply-content {
-            font-size: 13px;
-            color: var(--text-color);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
         .close-reply {
             width: 35px;
             height: 35px;
@@ -349,13 +324,6 @@
 
         .close-reply:hover {
             background: #f0f0f0;
-        }
-
-        /* أيقونة القفل للرسائل المشفرة */
-        .encrypted-icon {
-            font-size: 12px;
-            margin-left: 4px;
-            opacity: 0.8;
         }
 
         /* الوسائط في الرسائل */
@@ -447,7 +415,6 @@
             max-height: 120px;
             resize: none;
             font-family: inherit;
-            transition: background 0.2s;
         }
 
         .text-input:focus {
@@ -480,11 +447,6 @@
             transform: scale(0.9);
         }
 
-        .send-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
         .mic-btn {
             width: 45px;
             height: 45px;
@@ -497,12 +459,6 @@
             cursor: pointer;
             font-size: 18px;
             transition: all 0.2s;
-        }
-
-        .mic-btn:disabled {
-            background: #f0f0f0;
-            color: #ccc;
-            cursor: not-allowed;
         }
 
         .mic-btn.recording {
@@ -654,18 +610,6 @@
             gap: 12px;
         }
 
-        .progress-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary-color);
-            font-size: 18px;
-        }
-
         .progress-info {
             flex: 1;
         }
@@ -682,7 +626,6 @@
             border-radius: 4px;
             height: 6px;
             overflow: hidden;
-            margin-bottom: 3px;
         }
 
         .progress-bar {
@@ -732,7 +675,6 @@
             z-index: 1000;
             backdrop-filter: blur(5px);
             animation: fadeIn 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
         .processing-timer i {
@@ -743,11 +685,6 @@
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
         }
 
         /* رسالة نجاح الضغط */
@@ -765,12 +702,21 @@
             align-items: center;
             gap: 8px;
             z-index: 1000;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             animation: slideUp 0.3s ease;
         }
 
-        .compression-success i {
-            font-size: 14px;
+        .snackbar {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 13px;
+            display: none;
+            z-index: 300;
         }
     </style>
 </head>
@@ -826,7 +772,6 @@
         <div class="empty-chat" id="emptyChat" style="display: none;">
             <i class="fa-regular fa-message"></i>
             <p>لا توجد رسائل بعد</p>
-            <p style="font-size: 13px;">أرسل أول رسالة الآن</p>
         </div>
         
         <!-- رسالة الحظر -->
@@ -842,7 +787,7 @@
         <i class="fa-solid fa-eye"></i> هذه المحادثة للقراءة فقط
     </div>
 
-    <!-- شريط الرد (Reply Bar) -->
+    <!-- شريط الرد -->
     <div id="replyBar" class="reply-bar">
         <div class="reply-info" id="replyInfo">
             <div class="replying-to" id="replyingTo">الرد على...</div>
@@ -881,7 +826,7 @@
         <span id="processing-text">جاري معالجة الصورة...</span>
     </div>
 
-    <!-- رسالة نجاح الضغط (تظهر وتختفي) -->
+    <!-- رسالة نجاح الضغط -->
     <div id="compression-success" class="compression-success" style="display: none;">
         <i class="fa-solid fa-check-circle"></i>
         <span id="compression-text">تم ضغط الصورة بنجاح</span>
@@ -910,13 +855,12 @@
         <span id="recordTimer">00:00</span>
     </div>
 
-    <!-- Snackbar للرسائل -->
-    <div id="snackbar" style="position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 8px 20px; border-radius: 25px; font-size: 13px; display: none; z-index: 300;"></div>
+    <!-- Snackbar -->
+    <div id="snackbar" class="snackbar"></div>
 
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
-    <script src="js/ui.js"></script>
 
     <script>
         // ==================== تهيئة Firebase ====================
@@ -937,7 +881,7 @@
         const cloudName = "daxh9u5dc";
         const uploadPreset = "aulobylemmouchi";
 
-        // ==================== نظام التشفير End-to-End ====================
+        // ==================== نظام التشفير ====================
         class ChatEncryption {
             constructor(chatId, userId1, userId2) {
                 const users = [userId1, userId2].sort().join('_');
@@ -953,7 +897,6 @@
                         timestamp: Date.now()
                     };
                 } catch (error) {
-                    console.error('Encryption error:', error);
                     return {
                         encrypted: false,
                         data: text,
@@ -967,15 +910,12 @@
                     if (!encryptedData || typeof encryptedData !== 'object') {
                         return encryptedData || '';
                     }
-                    
                     if (!encryptedData.encrypted) {
                         return encryptedData.data || encryptedData || '';
                     }
-                    
                     const bytes = CryptoJS.AES.decrypt(encryptedData.data, this.chatKey);
                     return bytes.toString(CryptoJS.enc.Utf8);
                 } catch (error) {
-                    console.error('Decryption error:', error);
                     return '[🔒 رسالة مشفرة]';
                 }
             }
@@ -985,7 +925,6 @@
 
         function getEncryption() {
             if (!currentChatId || !currentUser || !otherUserId) return null;
-            
             const key = currentChatId;
             if (!encryptionInstances[key]) {
                 encryptionInstances[key] = new ChatEncryption(currentChatId, currentUser.uid, otherUserId);
@@ -993,7 +932,7 @@
             return encryptionInstances[key];
         }
 
-        // ==================== المتغيرات العامة ====================
+        // ==================== متغيرات عامة ====================
         let currentUser = null;
         let otherUserId = null;
         let otherUserData = null;
@@ -1007,15 +946,15 @@
         let isBlockedBy = false;
         let currentUploadId = null;
 
-        // ==================== متغيرات نظام الرد ====================
+        // متغيرات نظام الرد
         let replyingToMessage = null;
         let touchStartX = 0;
         let touchStartY = 0;
         let touchStartTime = 0;
         let currentSwipeElement = null;
         let isSwiping = false;
-        const SWIPE_THRESHOLD = 50; // المسافة الدنيا للسحب
-        const SWIPE_TIME_THRESHOLD = 300; // أقصى وقت للسحب (ميلي ثانية)
+        const SWIPE_THRESHOLD = 50;
+        const SWIPE_TIME_THRESHOLD = 300;
 
         // عناصر الصفحة
         const messagesContainer = document.getElementById('messagesContainer');
@@ -1032,26 +971,16 @@
         const blockedMessage = document.getElementById('blockedMessage');
         const blockedMessageText = document.getElementById('blockedMessageText');
         const readonlyNotice = document.getElementById('readonlyNotice');
-        const inputArea = document.getElementById('inputArea');
-        
-        // عناصر شريط الرد
         const replyBar = document.getElementById('replyBar');
-        const replyInfo = document.getElementById('replyInfo');
         const replyingTo = document.getElementById('replyingTo');
         const replyContent = document.getElementById('replyContent');
-        
-        // عناصر شريط التقدم
         const progressDiv = document.getElementById('chat-upload-progress');
         const progressBar = document.getElementById('progress-bar');
         const progressFilename = document.getElementById('progress-filename');
         const progressPercent = document.getElementById('progress-percent');
         const progressSpeed = document.getElementById('progress-speed');
-        
-        // عناصر مؤقت المعالجة
         const processingTimer = document.getElementById('processing-timer');
         const processingText = document.getElementById('processing-text');
-        
-        // عنصر رسالة النجاح
         const compressionSuccess = document.getElementById('compression-success');
         const compressionText = document.getElementById('compression-text');
 
@@ -1060,17 +989,13 @@
             snackbar.textContent = text;
             snackbar.style.background = isError ? '#ff3b30' : '#333';
             snackbar.style.display = 'block';
-            setTimeout(() => {
-                snackbar.style.display = 'none';
-            }, 3000);
+            setTimeout(() => snackbar.style.display = 'none', 3000);
         }
 
         function showCompressionSuccess(text) {
             compressionText.textContent = text;
             compressionSuccess.style.display = 'flex';
-            setTimeout(() => {
-                compressionSuccess.style.display = 'none';
-            }, 3000);
+            setTimeout(() => compressionSuccess.style.display = 'none', 3000);
         }
 
         function formatDateForSeparator(timestamp) {
@@ -1079,30 +1004,18 @@
             const yesterday = new Date(today);
             yesterday.setDate(yesterday.getDate() - 1);
 
-            if (date.toDateString() === today.toDateString()) {
-                return 'اليوم';
-            } else if (date.toDateString() === yesterday.toDateString()) {
-                return 'أمس';
-            } else {
-                return date.toLocaleDateString('ar-SA', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                });
-            }
+            if (date.toDateString() === today.toDateString()) return 'اليوم';
+            if (date.toDateString() === yesterday.toDateString()) return 'أمس';
+            return date.toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
         }
 
         function formatTimeOnly(timestamp) {
             const date = new Date(timestamp);
-            return date.toLocaleTimeString('ar-SA', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-            });
+            return date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', hour12: true });
         }
 
-        function isMoreThanHour(timestamp1, timestamp2) {
-            return Math.abs(timestamp2 - timestamp1) > 60 * 60 * 1000;
+        function isMoreThanHour(t1, t2) {
+            return Math.abs(t2 - t1) > 60 * 60 * 1000;
         }
 
         function goBack() {
@@ -1110,17 +1023,14 @@
         }
 
         function goToProfile() {
-            if (otherUserId) {
-                window.location.href = `profile.html?id=${otherUserId}`;
-            }
+            if (otherUserId) window.location.href = `profile.html?id=${otherUserId}`;
         }
 
         function getUserIdFromUrl() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('id');
+            return new URLSearchParams(window.location.search).get('id');
         }
 
-        // ==================== دوال نظام الرد ====================
+        // ==================== نظام الرد ====================
         window.cancelReply = () => {
             replyingToMessage = null;
             replyBar.classList.remove('show');
@@ -1129,52 +1039,33 @@
         function setReplyTo(message, senderName, content) {
             replyingToMessage = message;
             replyingTo.textContent = `الرد على ${senderName}`;
-            
-            // اختصار المحتوى إذا كان طويلاً
-            let displayContent = content;
-            if (displayContent.length > 50) {
-                displayContent = displayContent.substring(0, 47) + '...';
-            }
-            
-            replyContent.textContent = displayContent;
+            replyContent.textContent = content.length > 50 ? content.substring(0, 47) + '...' : content;
             replyBar.classList.add('show');
             messageInput.focus();
         }
 
-        // ==================== دوال السحب للرد ====================
-        function handleTouchStart(event, messageElement, message, senderName, content, isSent) {
+        // ==================== السحب للرد ====================
+        function handleTouchStart(event, el, msg, name, content, isSent) {
             const touch = event.touches[0];
             touchStartX = touch.clientX;
             touchStartY = touch.clientY;
             touchStartTime = Date.now();
-            currentSwipeElement = messageElement;
+            currentSwipeElement = el;
             isSwiping = false;
-            
-            // إضافة كلاس للتأثير البصري
-            messageElement.classList.add('swipe-active');
+            el.classList.add('swipe-active');
         }
 
-        function handleTouchMove(event, messageElement) {
-            if (!touchStartX || !currentSwipeElement || currentSwipeElement !== messageElement) return;
-            
+        function handleTouchMove(event, el) {
+            if (!touchStartX || currentSwipeElement !== el) return;
             const touch = event.touches[0];
             const deltaX = touch.clientX - touchStartX;
             const deltaY = Math.abs(touch.clientY - touchStartY);
-            
-            // إذا كان السحب عمودياً أكثر من أفقياً، نعتبره تمرير عادي
-            if (deltaY > Math.abs(deltaX)) {
-                return;
-            }
-            
-            // منع التمرير أثناء السحب الأفقي
+            if (deltaY > Math.abs(deltaX)) return;
             event.preventDefault();
             
-            // تطبيق تحويل بسيط للرسالة (تأثير بصري)
-            const wrapper = messageElement.querySelector('.message-wrapper');
+            const wrapper = el.querySelector('.message-wrapper');
             if (wrapper) {
-                const isSent = messageElement.querySelector('.sent') !== null;
-                
-                // تحديد اتجاه السحب المسموح
+                const isSent = el.querySelector('.sent') !== null;
                 if ((isSent && deltaX < -10) || (!isSent && deltaX > 10)) {
                     wrapper.style.transform = `translateX(${deltaX}px)`;
                     wrapper.style.opacity = '0.8';
@@ -1183,9 +1074,9 @@
             }
         }
 
-        function handleTouchEnd(event, messageElement, message, senderName, content, isSent) {
-            if (!touchStartX || !currentSwipeElement || currentSwipeElement !== messageElement) {
-                resetSwipe(messageElement);
+        function handleTouchEnd(event, el, msg, name, content, isSent) {
+            if (!touchStartX || currentSwipeElement !== el) {
+                resetSwipe(el);
                 return;
             }
             
@@ -1193,39 +1084,31 @@
             const deltaX = touch.clientX - touchStartX;
             const deltaTime = Date.now() - touchStartTime;
             
-            // إزالة كلاس التأثير
-            messageElement.classList.remove('swipe-active');
+            el.classList.remove('swipe-active');
             
-            // إعادة تعيين التحويل
-            const wrapper = messageElement.querySelector('.message-wrapper');
+            const wrapper = el.querySelector('.message-wrapper');
             if (wrapper) {
                 wrapper.style.transform = '';
                 wrapper.style.opacity = '';
             }
             
-            // التحقق من صحة السحب
-            const validSwipe = Math.abs(deltaX) > SWIPE_THRESHOLD && deltaTime < SWIPE_TIME_THRESHOLD && isSwiping;
-            
-            if (validSwipe) {
-                // التحقق من الاتجاه حسب موقع الرسالة
+            if (Math.abs(deltaX) > SWIPE_THRESHOLD && deltaTime < SWIPE_TIME_THRESHOLD && isSwiping) {
                 if ((isSent && deltaX < 0) || (!isSent && deltaX > 0)) {
-                    // سحب صحيح للداخل
-                    if (navigator.vibrate) navigator.vibrate(50); // اهتزاز خفيف
-                    setReplyTo(message, senderName, content);
+                    if (navigator.vibrate) navigator.vibrate(50);
+                    setReplyTo(msg, name, content);
                 }
             }
             
-            resetSwipe(messageElement);
+            resetSwipe(el);
         }
 
-        function resetSwipe(messageElement) {
+        function resetSwipe(el) {
             touchStartX = 0;
             touchStartY = 0;
             touchStartTime = 0;
             currentSwipeElement = null;
             isSwiping = false;
-            
-            const wrapper = messageElement.querySelector('.message-wrapper');
+            const wrapper = el?.querySelector('.message-wrapper');
             if (wrapper) {
                 wrapper.style.transform = '';
                 wrapper.style.opacity = '';
@@ -1236,19 +1119,15 @@
         window.toggleMenu = () => {
             const menu = document.getElementById('dropdownMenu');
             menu.classList.toggle('show');
-            
             if (menu.classList.contains('show')) {
-                setTimeout(() => {
-                    document.addEventListener('click', closeMenuOnClickOutside);
-                }, 0);
+                setTimeout(() => document.addEventListener('click', closeMenuOnClickOutside), 0);
             }
         };
 
-        function closeMenuOnClickOutside(event) {
+        function closeMenuOnClickOutside(e) {
             const menu = document.getElementById('dropdownMenu');
-            const menuBtn = document.querySelector('.menu-btn');
-            
-            if (!menu.contains(event.target) && !menuBtn.contains(event.target)) {
+            const btn = document.querySelector('.menu-btn');
+            if (!menu.contains(e.target) && !btn.contains(e.target)) {
                 menu.classList.remove('show');
                 document.removeEventListener('click', closeMenuOnClickOutside);
             }
@@ -1258,14 +1137,11 @@
         window.blockUser = async () => {
             if (!currentUser || !otherUserId) return;
             
-            const confirmed = await Aulo.confirm(
-                'هل أنت متأكد من حظر هذا المستخدم؟',
-                {
-                    title: 'تأكيد الحظر',
-                    confirmText: 'حظر',
-                    cancelText: 'إلغاء'
-                }
-            );
+            const confirmed = await Aulo?.confirm('هل أنت متأكد من حظر هذا المستخدم؟', {
+                title: 'تأكيد الحظر',
+                confirmText: 'حظر',
+                cancelText: 'إلغاء'
+            });
             
             if (!confirmed) return;
             
@@ -1276,63 +1152,27 @@
                 await database.ref(`following/${currentUser.uid}/${otherUserId}`).remove();
                 await database.ref(`followRequests/${otherUserId}/${currentUser.uid}`).remove();
                 await database.ref(`followRequests/${currentUser.uid}/${otherUserId}`).remove();
-                
-                await database.ref(`blocked/${currentUser.uid}/${otherUserId}`).set({
-                    timestamp: Date.now()
-                });
-                
+                await database.ref(`blocked/${currentUser.uid}/${otherUserId}`).set({ timestamp: Date.now() });
                 await database.ref(`notifications/${otherUserId}`).push({
-                    type: 'blocked',
-                    userId: currentUser.uid,
-                    timestamp: Date.now(),
-                    read: false
+                    type: 'blocked', userId: currentUser.uid, timestamp: Date.now(), read: false
                 });
                 
                 isBlocked = true;
                 updateBlockUI();
-                
                 showMessage('تم حظر المستخدم');
-                
             } catch (error) {
-                console.error('Error blocking user:', error);
                 showMessage('حدث خطأ', true);
             }
         };
 
-        window.unblockUser = async () => {
-            if (!currentUser || !otherUserId) return;
-            
-            try {
-                await database.ref(`blocked/${currentUser.uid}/${otherUserId}`).remove();
-                
-                isBlocked = false;
-                updateBlockUI();
-                
-                showMessage('تم إلغاء الحظر');
-                
-            } catch (error) {
-                console.error('Error unblocking user:', error);
-                showMessage('حدث خطأ', true);
-            }
-        };
-
-        window.reportUser = () => {
-            showMessage('تم إرسال البلاغ، شكراً لك');
-        };
+        window.reportUser = () => showMessage('تم إرسال البلاغ، شكراً لك');
 
         async function checkBlockStatus() {
             if (!currentUser || !otherUserId) return;
-            
-            try {
-                const blockedSnapshot = await database.ref(`blocked/${currentUser.uid}/${otherUserId}`).once('value');
-                isBlocked = blockedSnapshot.exists();
-                
-                const blockedBySnapshot = await database.ref(`blocked/${otherUserId}/${currentUser.uid}`).once('value');
-                isBlockedBy = blockedBySnapshot.exists();
-                
-            } catch (error) {
-                console.error('Error checking block status:', error);
-            }
+            const blocked = await database.ref(`blocked/${currentUser.uid}/${otherUserId}`).once('value');
+            isBlocked = blocked.exists();
+            const blockedBy = await database.ref(`blocked/${otherUserId}/${currentUser.uid}`).once('value');
+            isBlockedBy = blockedBy.exists();
         }
 
         function updateBlockUI() {
@@ -1373,10 +1213,10 @@
             }
         }
 
-        // ==================== دوال معالجة الوسائط والرفع ====================
+        // ==================== معالجة الوسائط ====================
         window.cancelCurrentUpload = () => {
             if (currentUploadId) {
-                uploadManager.abortUpload(currentUploadId);
+                uploadManager?.abortUpload(currentUploadId);
                 progressDiv.style.display = 'none';
                 currentUploadId = null;
                 showMessage('تم إلغاء الرفع');
@@ -1386,9 +1226,7 @@
         async function uploadWithProgress(file, options) {
             progressFilename.textContent = file.name.length > 25 ? file.name.substring(0, 22) + '...' : file.name;
             progressDiv.style.display = 'block';
-            
             const startTime = Date.now();
-            let lastLoaded = 0;
             
             try {
                 const result = await uploadManager.uploadFile(file, {
@@ -1396,21 +1234,15 @@
                     onProgress: (percent) => {
                         progressBar.style.width = `${percent}%`;
                         progressPercent.textContent = `${Math.round(percent)}%`;
-                        
                         const elapsed = (Date.now() - startTime) / 1000;
                         if (elapsed > 0) {
                             const speed = (file.size * (percent / 100)) / elapsed;
-                            progressSpeed.textContent = chatMediaProcessor.formatFileSize(speed) + '/s';
+                            progressSpeed.textContent = chatMediaProcessor?.formatFileSize(speed) + '/s';
                         }
                     }
                 });
-                
-                setTimeout(() => {
-                    progressDiv.style.display = 'none';
-                }, 500);
-                
+                setTimeout(() => progressDiv.style.display = 'none', 500);
                 return result;
-                
             } catch (error) {
                 progressDiv.style.display = 'none';
                 throw error;
@@ -1428,19 +1260,14 @@
                 processingTimer.style.display = 'flex';
                 
                 const result = await chatMediaProcessor.processChatImage(file, {
-                    maxWidth: 800,
-                    maxHeight: 800,
-                    quality: 0.75,
-                    format: 'image/webp'
+                    maxWidth: 800, maxHeight: 800, quality: 0.75, format: 'image/webp'
                 });
                 
                 processingTimer.style.display = 'none';
-                
                 showCompressionSuccess(`تم ضغط الصورة بنسبة ${result.compressionRatio}%`);
                 
                 const uploadResult = await uploadWithProgress(result.file, {
-                    folder: 'aulobylemmouchi/chat/images',
-                    resourceType: 'image'
+                    folder: 'aulobylemmouchi/chat/images', resourceType: 'image'
                 });
                 
                 const messageData = {
@@ -1458,7 +1285,6 @@
                 };
                 
                 await database.ref(`messages/${currentChatId}/${messageData.id}`).set(messageData);
-                
                 await database.ref(`chats/${currentChatId}`).update({
                     lastMessage: '📷 صورة',
                     lastMessageTime: Date.now(),
@@ -1470,7 +1296,6 @@
                 
             } catch (error) {
                 processingTimer.style.display = 'none';
-                console.error('Error sending image:', error);
                 showMessage('خطأ في إرسال الصورة: ' + error.message, true);
             }
         }
@@ -1480,30 +1305,24 @@
                 showMessage('لا يمكن إرسال الملفات', true);
                 return;
             }
-
             if (file.size > 50 * 1024 * 1024) {
                 showMessage('الفيديو كبير جداً (الحد الأقصى 50 ميجابايت)', true);
                 return;
             }
 
             try {
-                processingText.textContent = 'جاري معالجة الفيديو... قد يستغرق هذا دقيقة';
+                processingText.textContent = 'جاري معالجة الفيديو...';
                 processingTimer.style.display = 'flex';
                 
                 const result = await chatMediaProcessor.processChatVideo(file, {
-                    maxDuration: 30,
-                    targetWidth: 480,
-                    targetHeight: 640,
-                    targetSize: 8 * 1024 * 1024
+                    maxDuration: 30, targetWidth: 480, targetHeight: 640, targetSize: 8 * 1024 * 1024
                 });
                 
                 processingTimer.style.display = 'none';
-                
                 showCompressionSuccess(`تم ضغط الفيديو بنسبة ${result.compressionRatio}%`);
                 
                 const uploadResult = await uploadWithProgress(result.file, {
-                    folder: 'aulobylemmouchi/chat/videos',
-                    resourceType: 'video'
+                    folder: 'aulobylemmouchi/chat/videos', resourceType: 'video'
                 });
                 
                 const messageData = {
@@ -1521,7 +1340,6 @@
                 };
                 
                 await database.ref(`messages/${currentChatId}/${messageData.id}`).set(messageData);
-                
                 await database.ref(`chats/${currentChatId}`).update({
                     lastMessage: '🎥 فيديو',
                     lastMessageTime: Date.now(),
@@ -1533,52 +1351,36 @@
                 
             } catch (error) {
                 processingTimer.style.display = 'none';
-                console.error('Error sending video:', error);
                 showMessage('خطأ في إرسال الفيديو: ' + error.message, true);
             }
         }
 
-        // ==================== تحديث حالة اتصال المستخدم ====================
+        // ==================== حالة الاتصال ====================
         function setupOnlineStatus() {
             if (!otherUserId) return;
-            
-            const userStatusRef = database.ref(`users/${otherUserId}`);
-            
-            userStatusRef.on('value', (snapshot) => {
-                const userData = snapshot.val();
+            database.ref(`users/${otherUserId}`).on('value', (snap) => {
+                const userData = snap.val();
                 const statusSpan = document.getElementById('chat-user-status');
-                
                 if (isBlocked || isBlockedBy) {
                     statusSpan.textContent = 'غير متاح';
                     statusSpan.className = 'chat-user-status';
-                    return;
-                }
-                
-                if (userData?.online) {
+                } else if (userData?.online) {
                     statusSpan.textContent = 'متصل';
                     statusSpan.className = 'chat-user-status online';
+                } else if (userData?.lastSeen) {
+                    const diff = Date.now() - userData.lastSeen;
+                    if (diff < 60000) statusSpan.textContent = 'منذ لحظات';
+                    else if (diff < 3600000) statusSpan.textContent = `منذ ${Math.floor(diff/60000)} د`;
+                    else statusSpan.textContent = 'غير متصل';
+                    statusSpan.className = 'chat-user-status';
                 } else {
-                    if (userData?.lastSeen) {
-                        const lastSeen = new Date(userData.lastSeen);
-                        const now = new Date();
-                        const diff = now - lastSeen;
-                        
-                        if (diff < 60000) {
-                            statusSpan.textContent = 'منذ لحظات';
-                        } else if (diff < 3600000) {
-                            statusSpan.textContent = `منذ ${Math.floor(diff / 60000)} د`;
-                        } else {
-                            statusSpan.textContent = 'غير متصل';
-                        }
-                    } else {
-                        statusSpan.textContent = 'غير متصل';
-                    }
+                    statusSpan.textContent = 'غير متصل';
                     statusSpan.className = 'chat-user-status';
                 }
             });
         }
 
-        // ==================== تحميل معلومات المستخدم الآخر ====================
+        // ==================== تحميل معلومات المستخدم ====================
         async function loadChatUserInfo() {
             const user = auth.currentUser;
             if (!user) {
@@ -1594,7 +1396,6 @@
                 setTimeout(() => window.location.href = 'chatmain.html', 2000);
                 return;
             }
-
             if (otherUserId === currentUser.uid) {
                 showMessage('لا يمكنك الدردشة مع نفسك', true);
                 setTimeout(() => window.location.href = 'chatmain.html', 2000);
@@ -1604,7 +1405,6 @@
             try {
                 const userSnapshot = await database.ref(`users/${otherUserId}`).once('value');
                 otherUserData = userSnapshot.val();
-
                 if (!otherUserData) {
                     showMessage('المستخدم غير موجود', true);
                     setTimeout(() => window.location.href = 'chatmain.html', 2000);
@@ -1613,19 +1413,14 @@
 
                 await checkBlockStatus();
 
-                document.getElementById('chat-user-name').textContent = 
-                    otherUserData.displayName || otherUserData.username || 'مستخدم';
-                document.getElementById('chat-avatar').src = 
-                    otherUserData.avatar || 'images/profile.png';
+                document.getElementById('chat-user-name').textContent = otherUserData.displayName || otherUserData.username || 'مستخدم';
+                document.getElementById('chat-avatar').src = otherUserData.avatar || 'images/profile.png';
 
                 const chatId = [currentUser.uid, otherUserId].sort().join('_');
                 currentChatId = chatId;
 
                 await database.ref(`chats/${chatId}`).set({
-                    participants: {
-                        [currentUser.uid]: true,
-                        [otherUserId]: true
-                    },
+                    participants: { [currentUser.uid]: true, [otherUserId]: true },
                     lastMessage: '',
                     lastMessageTime: Date.now(),
                     createdAt: Date.now()
@@ -1635,76 +1430,79 @@
                 loadMessages();
 
             } catch (error) {
-                console.error('Error loading chat user:', error);
                 showMessage('خطأ في تحميل معلومات المستخدم', true);
             }
         }
 
-        // ==================== تحميل الرسائل مع دعم التشفير ====================
-        function loadMessages() {
-            if (!currentChatId || !currentUser) return;
+        // ==================== تحميل الرسائل مع التخزين المحلي ====================
+        function displayMessages(messages) {
+            messagesContainer.innerHTML = '';
+            
+            let lastDate = null;
+            let lastTimestamp = null;
 
-            if (messagesListener) {
-                database.ref(`messages/${currentChatId}`).off('value', messagesListener);
-            }
+            messages.forEach((message) => {
+                const messageDate = new Date(message.timestamp).toDateString();
+                
+                if (lastDate !== messageDate) {
+                    const sep = document.createElement('div');
+                    sep.className = 'date-separator';
+                    sep.innerHTML = `<span>${formatDateForSeparator(message.timestamp)}</span>`;
+                    messagesContainer.appendChild(sep);
+                    lastDate = messageDate;
+                }
+                
+                if (lastTimestamp && isMoreThanHour(lastTimestamp, message.timestamp)) {
+                    const sep = document.createElement('div');
+                    sep.className = 'time-separator';
+                    sep.innerHTML = `<span>${formatTimeOnly(message.timestamp)}</span>`;
+                    messagesContainer.appendChild(sep);
+                }
+                
+                const element = createMessageElement(message);
+                messagesContainer.appendChild(element);
+                
+                lastTimestamp = message.timestamp;
+            });
 
-            messagesListener = database.ref(`messages/${currentChatId}`)
-                .orderByChild('timestamp')
-                .limitToLast(100)
-                .on('value', (snapshot) => {
-                    
-                    loadingMessages.style.display = 'none';
-                    
-                    const messages = [];
-                    snapshot.forEach((child) => {
-                        messages.push({ id: child.key, ...child.val() });
-                    });
-
-                    if (messages.length === 0) {
-                        emptyChat.style.display = 'block';
-                        messagesContainer.innerHTML = '';
-                        messagesContainer.appendChild(emptyChat);
-                        messagesContainer.appendChild(blockedMessage);
-                        return;
-                    }
-
-                    emptyChat.style.display = 'none';
-                    messagesContainer.innerHTML = '';
-
-                    let lastDate = null;
-                    let lastTimestamp = null;
-
-                    messages.forEach((message, index) => {
-                        const messageDate = new Date(message.timestamp).toDateString();
-                        
-                        if (lastDate !== messageDate) {
-                            const dateSeparator = document.createElement('div');
-                            dateSeparator.className = 'date-separator';
-                            dateSeparator.innerHTML = `<span>${formatDateForSeparator(message.timestamp)}</span>`;
-                            messagesContainer.appendChild(dateSeparator);
-                            lastDate = messageDate;
-                        }
-                        
-                        if (lastTimestamp && isMoreThanHour(lastTimestamp, message.timestamp)) {
-                            const timeSeparator = document.createElement('div');
-                            timeSeparator.className = 'time-separator';
-                            timeSeparator.innerHTML = `<span>${formatTimeOnly(message.timestamp)}</span>`;
-                            messagesContainer.appendChild(timeSeparator);
-                        }
-                        
-                        const messageElement = createMessageElement(message);
-                        messagesContainer.appendChild(messageElement);
-                        
-                        lastTimestamp = message.timestamp;
-                    });
-
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                    updateBlockUI();
-                    markMessagesAsRead();
-                });
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        // ==================== إنشاء عنصر رسالة مع دعم الردود ====================
+        async function loadMessages() {
+            if (!currentChatId || !currentUser) return;
+
+            // عرض الرسائل المحفوظة أولاً
+            const cachedMessages = window.ChatStorage?.getMessages(currentChatId);
+            if (cachedMessages && cachedMessages.length > 0) {
+                displayMessages(cachedMessages);
+            }
+
+            try {
+                const snapshot = await database.ref(`messages/${currentChatId}`)
+                    .orderByChild('timestamp')
+                    .limitToLast(50)
+                    .once('value');
+                
+                const messages = [];
+                snapshot.forEach(child => messages.push({ id: child.key, ...child.val() }));
+                
+                // حفظ في التخزين المحلي
+                if (messages.length > 0 && window.ChatStorage) {
+                    window.ChatStorage.saveMessages(currentChatId, messages);
+                }
+                
+                // عرض الرسائل المحدثة
+                displayMessages(messages);
+                
+            } catch (error) {
+                console.error('Error loading messages:', error);
+                if (!cachedMessages) {
+                    showMessage('لا يمكن تحميل المحادثة حالياً', true);
+                }
+            }
+        }
+
+        // ==================== إنشاء عنصر رسالة ====================
         function createMessageElement(message) {
             const isSent = message.senderId === currentUser.uid;
             const senderName = isSent ? 'أنت' : (otherUserData?.displayName || otherUserData?.username || 'المستخدم');
@@ -1724,8 +1522,8 @@
                 displayContent = message.content;
             }
             
-            const messageContainer = document.createElement('div');
-            messageContainer.className = 'message-container';
+            const container = document.createElement('div');
+            container.className = 'message-container';
             
             const wrapper = document.createElement('div');
             wrapper.className = `message-wrapper ${isSent ? 'sent' : 'received'}`;
@@ -1733,15 +1531,14 @@
             const bubble = document.createElement('div');
             bubble.className = 'message-bubble';
             
-            // إضافة الرسالة المقتبسة إذا وجدت
             if (message.replyTo) {
-                const quotedDiv = document.createElement('div');
-                quotedDiv.className = 'quoted-message';
-                quotedDiv.innerHTML = `
+                const quoted = document.createElement('div');
+                quoted.className = 'quoted-message';
+                quoted.innerHTML = `
                     <div class="sender-name">${message.replyTo.senderName}</div>
                     <div class="message-content">${message.replyTo.content}</div>
                 `;
-                bubble.appendChild(quotedDiv);
+                bubble.appendChild(quoted);
             }
             
             if (message.type === 'text') {
@@ -1754,11 +1551,7 @@
                 bubble.innerHTML += `<img src="${message.content}" alt="صورة" loading="lazy" onclick="window.open('${message.content}', '_blank')">`;
             } else if (message.type === 'video') {
                 bubble.className = 'media-message';
-                bubble.innerHTML += `
-                    <video src="${message.content}" controls preload="metadata">
-                        <source src="${message.content}" type="video/mp4">
-                    </video>
-                `;
+                bubble.innerHTML += `<video src="${message.content}" controls preload="metadata"></video>`;
             } else if (message.type === 'audio') {
                 bubble.className = 'audio-message';
                 bubble.innerHTML += `
@@ -1769,62 +1562,30 @@
             }
             
             wrapper.appendChild(bubble);
-            messageContainer.appendChild(wrapper);
+            container.appendChild(wrapper);
             
-            // إضافة مستمعات السحب
             const contentForReply = message.type === 'text' ? displayContent : 
                                    (message.type === 'image' ? '📷 صورة' : 
                                    (message.type === 'video' ? '🎥 فيديو' : '🎤 رسالة صوتية'));
             
-            messageContainer.addEventListener('touchstart', (e) => {
+            container.addEventListener('touchstart', (e) => {
                 if (isBlocked || isBlockedBy) return;
-                handleTouchStart(e, messageContainer, message, senderName, contentForReply, isSent);
+                handleTouchStart(e, container, message, senderName, contentForReply, isSent);
             });
-            
-            messageContainer.addEventListener('touchmove', (e) => {
+            container.addEventListener('touchmove', (e) => {
                 if (isBlocked || isBlockedBy) return;
-                handleTouchMove(e, messageContainer);
+                handleTouchMove(e, container);
             });
-            
-            messageContainer.addEventListener('touchend', (e) => {
+            container.addEventListener('touchend', (e) => {
                 if (isBlocked || isBlockedBy) return;
-                handleTouchEnd(e, messageContainer, message, senderName, contentForReply, isSent);
+                handleTouchEnd(e, container, message, senderName, contentForReply, isSent);
             });
+            container.addEventListener('touchcancel', () => resetSwipe(container));
             
-            messageContainer.addEventListener('touchcancel', (e) => {
-                resetSwipe(messageContainer);
-            });
-            
-            return messageContainer;
+            return container;
         }
 
-        // ==================== تحديث حالة القراءة ====================
-        async function markMessagesAsRead() {
-            if (!currentChatId || !currentUser || isBlocked || isBlockedBy) return;
-
-            try {
-                const snapshot = await database.ref(`messages/${currentChatId}`)
-                    .orderByChild('read')
-                    .equalTo(false)
-                    .once('value');
-
-                const updates = {};
-                snapshot.forEach((child) => {
-                    const message = child.val();
-                    if (message.senderId !== currentUser.uid) {
-                        updates[`messages/${currentChatId}/${child.key}/read`] = true;
-                    }
-                });
-
-                if (Object.keys(updates).length > 0) {
-                    await database.ref().update(updates);
-                }
-            } catch (error) {
-                console.error('Error marking messages as read:', error);
-            }
-        }
-
-        // ==================== إرسال رسالة نصية مع دعم الردود ====================
+        // ==================== إرسال رسالة نصية ====================
         async function sendTextMessage() {
             if (isBlocked || isBlockedBy) {
                 showMessage('لا يمكن إرسال الرسائل', true);
@@ -1874,12 +1635,11 @@
                 cancelReply();
 
             } catch (error) {
-                console.error('Error sending message:', error);
                 showMessage('خطأ في إرسال الرسالة', true);
             }
         }
 
-        // ==================== تسجيل الصوت مع دعم الردود ====================
+        // ==================== تسجيل الصوت ====================
         async function toggleRecording() {
             if (isBlocked || isBlockedBy) {
                 showMessage('لا يمكن إرسال التسجيلات الصوتية', true);
@@ -1892,37 +1652,31 @@
                 clearInterval(recordingTimer);
                 recordIndicator.style.display = 'none';
                 micButton.classList.remove('recording');
-                
             } else {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     mediaRecorder = new MediaRecorder(stream);
                     audioChunks = [];
                     
-                    mediaRecorder.ondataavailable = (e) => {
-                        audioChunks.push(e.data);
-                    };
+                    mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
                     
                     mediaRecorder.onstop = async () => {
                         const rawBlob = new Blob(audioChunks, { type: 'audio/webm' });
                         const rawFile = new File([rawBlob], 'recording.webm', { type: 'audio/webm' });
                         
                         try {
-                            processingText.textContent = 'جاري معالجة التسجيل الصوتي...';
+                            processingText.textContent = 'جاري معالجة التسجيل...';
                             processingTimer.style.display = 'flex';
                             
                             const result = await chatMediaProcessor.processChatAudio(rawFile, {
-                                targetBitrate: 48000,
-                                maxDuration: 120
+                                targetBitrate: 48000, maxDuration: 120
                             });
                             
                             processingTimer.style.display = 'none';
-                            
                             showCompressionSuccess(`تم ضغط التسجيل بنسبة ${result.compressionRatio}%`);
                             
                             const uploadResult = await uploadWithProgress(result.file, {
-                                folder: 'aulobylemmouchi/chat/audio',
-                                resourceType: 'video'
+                                folder: 'aulobylemmouchi/chat/audio', resourceType: 'video'
                             });
                             
                             const messageData = {
@@ -1940,7 +1694,6 @@
                             };
                             
                             await database.ref(`messages/${currentChatId}/${messageData.id}`).set(messageData);
-                            
                             await database.ref(`chats/${currentChatId}`).update({
                                 lastMessage: '🎤 رسالة صوتية',
                                 lastMessageTime: Date.now(),
@@ -1952,7 +1705,6 @@
                             
                         } catch (error) {
                             processingTimer.style.display = 'none';
-                            console.error('Error processing/uploading audio:', error);
                             showMessage('خطأ في معالجة التسجيل: ' + error.message, true);
                         }
                     };
@@ -1967,11 +1719,10 @@
                         recordingSeconds++;
                         const mins = Math.floor(recordingSeconds / 60);
                         const secs = recordingSeconds % 60;
-                        recordTimer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                        recordTimer.textContent = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
                     }, 1000);
                     
                 } catch (error) {
-                    console.error('Error accessing microphone:', error);
                     showMessage('لا يمكن الوصول إلى الميكروفون', true);
                 }
             }
@@ -2005,19 +1756,17 @@
             }
         });
 
-        // ==================== مستمع input الملفات ====================
+        // ==================== مستمع الملفات ====================
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
             
             const type = file.type.startsWith('image/') ? 'image' : 'video';
-            
             if (type === 'image') {
                 await sendProcessedImage(file);
             } else {
                 await sendProcessedVideo(file);
             }
-            
             fileInput.value = '';
         });
 
@@ -2027,7 +1776,7 @@
             }
         });
 
-        auth.onAuthStateChanged((user) => {
+        auth.onAuthStateChanged(user => {
             if (user) {
                 loadChatUserInfo();
             } else {
@@ -2035,34 +1784,5 @@
             }
         });
     </script>
-	<!-- أضف هذا في نهاية script في chat.html -->
-	<script>
-	// تسجيل Service Worker
-	if ('serviceWorker' in navigator) {
-		navigator.serviceWorker.register('/firebase-messaging-sw.js')
-			.then(reg => console.log('Service Worker registered'))
-			.catch(err => console.log('Service Worker error:', err));
-	}
-
-	// في دالة loadMessages، بعد تحميل الرسائل:
-	if (messages.length > 0) {
-		const lastMessage = messages[messages.length - 1];
-		if (lastMessage.senderId !== currentUser?.uid && !lastMessage.read) {
-			db.playSound('not');
-			
-			const sender = await db.getUser(lastMessage.senderId);
-			db.notify.showNewMessage(
-				sender?.displayName || sender?.username || 'مستخدم',
-				lastMessage.type === 'text' ? lastMessage.content : '📎 وسائط',
-				currentChatId
-			);
-		}
-	}
-	</script>
-	<script>
-	if ('serviceWorker' in navigator) {
-		navigator.serviceWorker.register('/firebase-messaging-sw.js');
-	}
-	</script>
 </body>
 </html>

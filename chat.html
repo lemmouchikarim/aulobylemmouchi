@@ -15,9 +15,6 @@
     <script src="js/chatMediaProcessor.js"></script>
     <script src="js/uploadManager.js"></script>
     
-    <!-- التخزين المحلي -->
-    <script src="js/chat-offline.js"></script>
-    
     <style>
         * {
             margin: 0;
@@ -144,7 +141,7 @@
             gap: 12px;
             cursor: pointer;
             transition: background 0.2s;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid #eee;
         }
         
         .dropdown-item:last-child {
@@ -157,15 +154,15 @@
         
         .dropdown-item i {
             width: 20px;
-            color: var(--secondary-text);
+            color: #666;
         }
         
         .dropdown-item.block {
-            color: var(--error-color);
+            color: #ff3b30;
         }
         
         .dropdown-item.block i {
-            color: var(--error-color);
+            color: #ff3b30;
         }
 
         /* منطقة المحادثة */
@@ -554,23 +551,23 @@
             background: #fff1f0;
             border-radius: 15px;
             margin: 20px;
-            border: 1px solid var(--error-color);
+            border: 1px solid #ff3b30;
         }
         
         .blocked-message i {
             font-size: 40px;
-            color: var(--error-color);
+            color: #ff3b30;
             margin-bottom: 10px;
         }
         
         .blocked-message p {
-            color: var(--text-color);
+            color: #1a1a1a;
             font-size: 14px;
             margin-bottom: 15px;
         }
         
         .blocked-message small {
-            color: var(--secondary-text);
+            color: #757575;
             font-size: 12px;
         }
 
@@ -579,7 +576,7 @@
             text-align: center;
             padding: 10px;
             background: #f8f8f8;
-            color: var(--secondary-text);
+            color: #757575;
             font-size: 12px;
             border-top: 1px solid #eee;
         }
@@ -618,7 +615,7 @@
             font-size: 12px;
             font-weight: 600;
             margin-bottom: 5px;
-            color: var(--text-color);
+            color: #1a1a1a;
         }
 
         .progress-bar-container {
@@ -629,7 +626,7 @@
         }
 
         .progress-bar {
-            background: var(--primary-color);
+            background: #a018cb;
             width: 0%;
             height: 100%;
             transition: width 0.3s ease;
@@ -639,16 +636,16 @@
             display: flex;
             justify-content: space-between;
             font-size: 10px;
-            color: var(--secondary-text);
+            color: #757575;
         }
 
         .progress-percent {
             font-weight: 600;
-            color: var(--primary-color);
+            color: #a018cb;
         }
 
         .progress-cancel {
-            color: var(--error-color);
+            color: #ff3b30;
             cursor: pointer;
             font-size: 18px;
             opacity: 0.7;
@@ -678,7 +675,7 @@
         }
 
         .processing-timer i {
-            color: var(--primary-color);
+            color: #a018cb;
             animation: spin 1s linear infinite;
         }
 
@@ -881,6 +878,41 @@
         const cloudName = "daxh9u5dc";
         const uploadPreset = "aulobylemmouchi";
 
+        // ==================== نظام التخزين المحلي ====================
+        const ChatStorage = {
+            saveMessages(chatId, messages) {
+                try {
+                    localStorage.setItem(`chat_${chatId}`, JSON.stringify({
+                        messages: messages,
+                        timestamp: Date.now()
+                    }));
+                } catch (e) {
+                    console.error('فشل في حفظ المحادثة محلياً', e);
+                }
+            },
+            
+            getMessages(chatId) {
+                try {
+                    const data = localStorage.getItem(`chat_${chatId}`);
+                    if (data) {
+                        const parsed = JSON.parse(data);
+                        if (Date.now() - parsed.timestamp < 7 * 24 * 60 * 60 * 1000) {
+                            return parsed.messages;
+                        }
+                    }
+                } catch (e) {
+                    console.error('فشل في تحميل المحادثة المحفوظة', e);
+                }
+                return null;
+            },
+            
+            addMessage(chatId, message) {
+                const messages = this.getMessages(chatId) || [];
+                messages.push(message);
+                this.saveMessages(chatId, messages);
+            }
+        };
+
         // ==================== نظام التشفير ====================
         class ChatEncryption {
             constructor(chatId, userId1, userId2) {
@@ -937,7 +969,6 @@
         let otherUserId = null;
         let otherUserData = null;
         let currentChatId = null;
-        let messagesListener = null;
         let mediaRecorder = null;
         let audioChunks = [];
         let recordingTimer = null;
@@ -948,13 +979,6 @@
 
         // متغيرات نظام الرد
         let replyingToMessage = null;
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchStartTime = 0;
-        let currentSwipeElement = null;
-        let isSwiping = false;
-        const SWIPE_THRESHOLD = 50;
-        const SWIPE_TIME_THRESHOLD = 300;
 
         // عناصر الصفحة
         const messagesContainer = document.getElementById('messagesContainer');
@@ -1044,77 +1068,6 @@
             messageInput.focus();
         }
 
-        // ==================== السحب للرد ====================
-        function handleTouchStart(event, el, msg, name, content, isSent) {
-            const touch = event.touches[0];
-            touchStartX = touch.clientX;
-            touchStartY = touch.clientY;
-            touchStartTime = Date.now();
-            currentSwipeElement = el;
-            isSwiping = false;
-            el.classList.add('swipe-active');
-        }
-
-        function handleTouchMove(event, el) {
-            if (!touchStartX || currentSwipeElement !== el) return;
-            const touch = event.touches[0];
-            const deltaX = touch.clientX - touchStartX;
-            const deltaY = Math.abs(touch.clientY - touchStartY);
-            if (deltaY > Math.abs(deltaX)) return;
-            event.preventDefault();
-            
-            const wrapper = el.querySelector('.message-wrapper');
-            if (wrapper) {
-                const isSent = el.querySelector('.sent') !== null;
-                if ((isSent && deltaX < -10) || (!isSent && deltaX > 10)) {
-                    wrapper.style.transform = `translateX(${deltaX}px)`;
-                    wrapper.style.opacity = '0.8';
-                    isSwiping = true;
-                }
-            }
-        }
-
-        function handleTouchEnd(event, el, msg, name, content, isSent) {
-            if (!touchStartX || currentSwipeElement !== el) {
-                resetSwipe(el);
-                return;
-            }
-            
-            const touch = event.changedTouches[0];
-            const deltaX = touch.clientX - touchStartX;
-            const deltaTime = Date.now() - touchStartTime;
-            
-            el.classList.remove('swipe-active');
-            
-            const wrapper = el.querySelector('.message-wrapper');
-            if (wrapper) {
-                wrapper.style.transform = '';
-                wrapper.style.opacity = '';
-            }
-            
-            if (Math.abs(deltaX) > SWIPE_THRESHOLD && deltaTime < SWIPE_TIME_THRESHOLD && isSwiping) {
-                if ((isSent && deltaX < 0) || (!isSent && deltaX > 0)) {
-                    if (navigator.vibrate) navigator.vibrate(50);
-                    setReplyTo(msg, name, content);
-                }
-            }
-            
-            resetSwipe(el);
-        }
-
-        function resetSwipe(el) {
-            touchStartX = 0;
-            touchStartY = 0;
-            touchStartTime = 0;
-            currentSwipeElement = null;
-            isSwiping = false;
-            const wrapper = el?.querySelector('.message-wrapper');
-            if (wrapper) {
-                wrapper.style.transform = '';
-                wrapper.style.opacity = '';
-            }
-        }
-
         // ==================== القائمة المنسدلة ====================
         window.toggleMenu = () => {
             const menu = document.getElementById('dropdownMenu');
@@ -1137,13 +1090,7 @@
         window.blockUser = async () => {
             if (!currentUser || !otherUserId) return;
             
-            const confirmed = await Aulo?.confirm('هل أنت متأكد من حظر هذا المستخدم؟', {
-                title: 'تأكيد الحظر',
-                confirmText: 'حظر',
-                cancelText: 'إلغاء'
-            });
-            
-            if (!confirmed) return;
+            if (!confirm('هل أنت متأكد من حظر هذا المستخدم؟')) return;
             
             try {
                 await database.ref(`followers/${otherUserId}/${currentUser.uid}`).remove();
@@ -1153,9 +1100,6 @@
                 await database.ref(`followRequests/${otherUserId}/${currentUser.uid}`).remove();
                 await database.ref(`followRequests/${currentUser.uid}/${otherUserId}`).remove();
                 await database.ref(`blocked/${currentUser.uid}/${otherUserId}`).set({ timestamp: Date.now() });
-                await database.ref(`notifications/${otherUserId}`).push({
-                    type: 'blocked', userId: currentUser.uid, timestamp: Date.now(), read: false
-                });
                 
                 isBlocked = true;
                 updateBlockUI();
@@ -1169,10 +1113,14 @@
 
         async function checkBlockStatus() {
             if (!currentUser || !otherUserId) return;
-            const blocked = await database.ref(`blocked/${currentUser.uid}/${otherUserId}`).once('value');
-            isBlocked = blocked.exists();
-            const blockedBy = await database.ref(`blocked/${otherUserId}/${currentUser.uid}`).once('value');
-            isBlockedBy = blockedBy.exists();
+            try {
+                const blocked = await database.ref(`blocked/${currentUser.uid}/${otherUserId}`).once('value');
+                isBlocked = blocked.exists();
+                const blockedBy = await database.ref(`blocked/${otherUserId}/${currentUser.uid}`).once('value');
+                isBlockedBy = blockedBy.exists();
+            } catch (error) {
+                console.error('Error checking block status:', error);
+            }
         }
 
         function updateBlockUI() {
@@ -1215,8 +1163,8 @@
 
         // ==================== معالجة الوسائط ====================
         window.cancelCurrentUpload = () => {
-            if (currentUploadId) {
-                uploadManager?.abortUpload(currentUploadId);
+            if (currentUploadId && window.uploadManager) {
+                window.uploadManager.abortUpload(currentUploadId);
                 progressDiv.style.display = 'none';
                 currentUploadId = null;
                 showMessage('تم إلغاء الرفع');
@@ -1226,19 +1174,13 @@
         async function uploadWithProgress(file, options) {
             progressFilename.textContent = file.name.length > 25 ? file.name.substring(0, 22) + '...' : file.name;
             progressDiv.style.display = 'block';
-            const startTime = Date.now();
             
             try {
-                const result = await uploadManager.uploadFile(file, {
+                const result = await window.uploadManager.uploadFile(file, {
                     ...options,
                     onProgress: (percent) => {
                         progressBar.style.width = `${percent}%`;
                         progressPercent.textContent = `${Math.round(percent)}%`;
-                        const elapsed = (Date.now() - startTime) / 1000;
-                        if (elapsed > 0) {
-                            const speed = (file.size * (percent / 100)) / elapsed;
-                            progressSpeed.textContent = chatMediaProcessor?.formatFileSize(speed) + '/s';
-                        }
                     }
                 });
                 setTimeout(() => progressDiv.style.display = 'none', 500);
@@ -1363,19 +1305,15 @@
                 const statusSpan = document.getElementById('chat-user-status');
                 if (isBlocked || isBlockedBy) {
                     statusSpan.textContent = 'غير متاح';
-                    statusSpan.className = 'chat-user-status';
                 } else if (userData?.online) {
                     statusSpan.textContent = 'متصل';
-                    statusSpan.className = 'chat-user-status online';
                 } else if (userData?.lastSeen) {
                     const diff = Date.now() - userData.lastSeen;
                     if (diff < 60000) statusSpan.textContent = 'منذ لحظات';
                     else if (diff < 3600000) statusSpan.textContent = `منذ ${Math.floor(diff/60000)} د`;
                     else statusSpan.textContent = 'غير متصل';
-                    statusSpan.className = 'chat-user-status';
                 } else {
                     statusSpan.textContent = 'غير متصل';
-                    statusSpan.className = 'chat-user-status';
                 }
             });
         }
@@ -1434,7 +1372,7 @@
             }
         }
 
-        // ==================== تحميل الرسائل مع التخزين المحلي ====================
+        // ==================== عرض الرسائل ====================
         function displayMessages(messages) {
             messagesContainer.innerHTML = '';
             
@@ -1471,11 +1409,7 @@
         async function loadMessages() {
             if (!currentChatId || !currentUser) return;
 
-            // عرض الرسائل المحفوظة أولاً
-            const cachedMessages = window.ChatStorage?.getMessages(currentChatId);
-            if (cachedMessages && cachedMessages.length > 0) {
-                displayMessages(cachedMessages);
-            }
+            loadingMessages.style.display = 'block';
 
             try {
                 const snapshot = await database.ref(`messages/${currentChatId}`)
@@ -1486,19 +1420,20 @@
                 const messages = [];
                 snapshot.forEach(child => messages.push({ id: child.key, ...child.val() }));
                 
-                // حفظ في التخزين المحلي
-                if (messages.length > 0 && window.ChatStorage) {
-                    window.ChatStorage.saveMessages(currentChatId, messages);
+                loadingMessages.style.display = 'none';
+                
+                if (messages.length === 0) {
+                    emptyChat.style.display = 'block';
+                    return;
                 }
                 
-                // عرض الرسائل المحدثة
+                emptyChat.style.display = 'none';
                 displayMessages(messages);
                 
             } catch (error) {
                 console.error('Error loading messages:', error);
-                if (!cachedMessages) {
-                    showMessage('لا يمكن تحميل المحادثة حالياً', true);
-                }
+                loadingMessages.style.display = 'none';
+                showMessage('لا يمكن تحميل المحادثة حالياً', true);
             }
         }
 
@@ -1522,9 +1457,6 @@
                 displayContent = message.content;
             }
             
-            const container = document.createElement('div');
-            container.className = 'message-container';
-            
             const wrapper = document.createElement('div');
             wrapper.className = `message-wrapper ${isSent ? 'sent' : 'received'}`;
             
@@ -1536,25 +1468,23 @@
                 quoted.className = 'quoted-message';
                 quoted.innerHTML = `
                     <div class="sender-name">${message.replyTo.senderName}</div>
-                    <div class="message-content">${message.replyTo.content}</div>
+                    <div>${message.replyTo.content}</div>
                 `;
                 bubble.appendChild(quoted);
             }
             
             if (message.type === 'text') {
                 const lockEmoji = isEncrypted ? '🔒 ' : '';
-                const textDiv = document.createElement('div');
-                textDiv.textContent = lockEmoji + displayContent;
-                bubble.appendChild(textDiv);
+                bubble.textContent = lockEmoji + displayContent;
             } else if (message.type === 'image') {
                 bubble.className = 'media-message';
-                bubble.innerHTML += `<img src="${message.content}" alt="صورة" loading="lazy" onclick="window.open('${message.content}', '_blank')">`;
+                bubble.innerHTML = `<img src="${message.content}" alt="صورة" loading="lazy" onclick="window.open('${message.content}', '_blank')">`;
             } else if (message.type === 'video') {
                 bubble.className = 'media-message';
-                bubble.innerHTML += `<video src="${message.content}" controls preload="metadata"></video>`;
+                bubble.innerHTML = `<video src="${message.content}" controls preload="metadata"></video>`;
             } else if (message.type === 'audio') {
                 bubble.className = 'audio-message';
-                bubble.innerHTML += `
+                bubble.innerHTML = `
                     <i class="fa-solid fa-circle-play" onclick="this.nextElementSibling.play()"></i>
                     <audio src="${message.content}" preload="none"></audio>
                     <span>رسالة صوتية</span>
@@ -1562,27 +1492,18 @@
             }
             
             wrapper.appendChild(bubble);
-            container.appendChild(wrapper);
             
-            const contentForReply = message.type === 'text' ? displayContent : 
+            // إضافة مستمع السحب للرد (اختصار للكود)
+            wrapper.addEventListener('click', () => {
+                if (!isBlocked && !isBlockedBy) {
+                    const content = message.type === 'text' ? displayContent : 
                                    (message.type === 'image' ? '📷 صورة' : 
                                    (message.type === 'video' ? '🎥 فيديو' : '🎤 رسالة صوتية'));
+                    setReplyTo(message, senderName, content);
+                }
+            });
             
-            container.addEventListener('touchstart', (e) => {
-                if (isBlocked || isBlockedBy) return;
-                handleTouchStart(e, container, message, senderName, contentForReply, isSent);
-            });
-            container.addEventListener('touchmove', (e) => {
-                if (isBlocked || isBlockedBy) return;
-                handleTouchMove(e, container);
-            });
-            container.addEventListener('touchend', (e) => {
-                if (isBlocked || isBlockedBy) return;
-                handleTouchEnd(e, container, message, senderName, contentForReply, isSent);
-            });
-            container.addEventListener('touchcancel', () => resetSwipe(container));
-            
-            return container;
+            return wrapper;
         }
 
         // ==================== إرسال رسالة نصية ====================
@@ -1620,15 +1541,6 @@
                     lastSenderId: currentUser.uid
                 });
 
-                await database.ref(`notifications/${otherUserId}`).push({
-                    type: 'chat',
-                    chatId: currentChatId,
-                    userId: currentUser.uid,
-                    message: '🔒 رسالة مشفرة',
-                    timestamp: Date.now(),
-                    read: false
-                });
-
                 messageInput.value = '';
                 messageInput.style.height = 'auto';
                 messageInput.focus();
@@ -1661,29 +1573,32 @@
                     mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
                     
                     mediaRecorder.onstop = async () => {
-                        const rawBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                        const rawFile = new File([rawBlob], 'recording.webm', { type: 'audio/webm' });
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                         
                         try {
-                            processingText.textContent = 'جاري معالجة التسجيل...';
+                            processingText.textContent = 'جاري رفع التسجيل...';
                             processingTimer.style.display = 'flex';
                             
-                            const result = await chatMediaProcessor.processChatAudio(rawFile, {
-                                targetBitrate: 48000, maxDuration: 120
+                            const formData = new FormData();
+                            formData.append('file', audioBlob);
+                            formData.append('upload_preset', uploadPreset);
+                            formData.append('folder', 'aulobylemmouchi/chat/audio');
+                            formData.append('resource_type', 'video');
+                            
+                            const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/video/upload`, {
+                                method: 'POST',
+                                body: formData
                             });
+                            
+                            const data = await response.json();
                             
                             processingTimer.style.display = 'none';
-                            showCompressionSuccess(`تم ضغط التسجيل بنسبة ${result.compressionRatio}%`);
-                            
-                            const uploadResult = await uploadWithProgress(result.file, {
-                                folder: 'aulobylemmouchi/chat/audio', resourceType: 'video'
-                            });
                             
                             const messageData = {
                                 id: database.ref(`messages/${currentChatId}`).push().key,
                                 senderId: currentUser.uid,
                                 type: 'audio',
-                                content: uploadResult.secure_url,
+                                content: data.secure_url,
                                 timestamp: Date.now(),
                                 read: false,
                                 replyTo: replyingToMessage ? {
@@ -1705,7 +1620,7 @@
                             
                         } catch (error) {
                             processingTimer.style.display = 'none';
-                            showMessage('خطأ في معالجة التسجيل: ' + error.message, true);
+                            showMessage('خطأ في رفع التسجيل', true);
                         }
                     };
                     
@@ -1768,12 +1683,6 @@
                 await sendProcessedVideo(file);
             }
             fileInput.value = '';
-        });
-
-        window.addEventListener('beforeunload', () => {
-            if (messagesListener && currentChatId) {
-                database.ref(`messages/${currentChatId}`).off('value', messagesListener);
-            }
         });
 
         auth.onAuthStateChanged(user => {

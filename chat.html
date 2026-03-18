@@ -270,7 +270,7 @@
             color: #a018cb;
         }
 
-        /* شريط الرد - تم تعديله ليظهر فوق منطقة الإدخال مباشرة */
+        /* شريط الرد */
         .reply-bar {
             position: fixed;
             bottom: 70px;
@@ -279,7 +279,7 @@
             background: white;
             border-top: 1px solid #eee;
             padding: 10px 15px;
-            display: none; /* مخفي افتراضياً */
+            display: none;
             align-items: center;
             gap: 12px;
             z-index: 150;
@@ -288,7 +288,7 @@
         }
 
         .reply-bar.show {
-            display: flex; /* يظهر فقط عند إضافة كلاس show */
+            display: flex;
         }
 
         .reply-info {
@@ -791,7 +791,7 @@
         <i class="fa-solid fa-eye"></i> هذه المحادثة للقراءة فقط
     </div>
 
-    <!-- شريط الرد - مخفي افتراضياً -->
+    <!-- شريط الرد -->
     <div id="replyBar" class="reply-bar">
         <div class="reply-info" id="replyInfo">
             <div class="replying-to" id="replyingTo">الرد على...</div>
@@ -983,6 +983,7 @@
         let isBlocked = false;
         let isBlockedBy = false;
         let currentUploadId = null;
+        let messagesListener = null; // لإعادة تحميل الرسائل
 
         // متغيرات نظام الرد
         let replyingToMessage = null;
@@ -1061,17 +1062,17 @@
             return new URLSearchParams(window.location.search).get('id');
         }
 
-        // ==================== نظام الرد المُصلح ====================
+        // ==================== نظام الرد ====================
         window.cancelReply = () => {
             replyingToMessage = null;
-            replyBar.classList.remove('show'); // إخفاء شريط الرد
+            replyBar.classList.remove('show');
         };
 
         function setReplyTo(message, senderName, content) {
             replyingToMessage = message;
             replyingTo.textContent = `الرد على ${senderName}`;
             replyContent.textContent = content.length > 50 ? content.substring(0, 47) + '...' : content;
-            replyBar.classList.add('show'); // إظهار شريط الرد
+            replyBar.classList.add('show');
             messageInput.focus();
         }
 
@@ -1379,7 +1380,7 @@
             }
         }
 
-        // ==================== عرض الرسائل ====================
+        // ==================== تحميل الرسائل مع استماع مباشر ====================
         function displayMessages(messages) {
             messagesContainer.innerHTML = '';
             
@@ -1413,38 +1414,38 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        async function loadMessages() {
+        function loadMessages() {
             if (!currentChatId || !currentUser) return;
 
-            loadingMessages.style.display = 'block';
-
-            try {
-                const snapshot = await database.ref(`messages/${currentChatId}`)
-                    .orderByChild('timestamp')
-                    .limitToLast(50)
-                    .once('value');
-                
-                const messages = [];
-                snapshot.forEach(child => messages.push({ id: child.key, ...child.val() }));
-                
-                loadingMessages.style.display = 'none';
-                
-                if (messages.length === 0) {
-                    emptyChat.style.display = 'block';
-                    return;
-                }
-                
-                emptyChat.style.display = 'none';
-                displayMessages(messages);
-                
-            } catch (error) {
-                console.error('Error loading messages:', error);
-                loadingMessages.style.display = 'none';
-                showMessage('لا يمكن تحميل المحادثة حالياً', true);
+            // إلغاء الاستماع السابق
+            if (messagesListener) {
+                database.ref(`messages/${currentChatId}`).off('value', messagesListener);
             }
+
+            // استماع مباشر للرسائل الجديدة
+            messagesListener = database.ref(`messages/${currentChatId}`)
+                .orderByChild('timestamp')
+                .limitToLast(50)
+                .on('value', (snapshot) => {
+                    
+                    loadingMessages.style.display = 'none';
+                    
+                    const messages = [];
+                    snapshot.forEach(child => messages.push({ id: child.key, ...child.val() }));
+                    
+                    if (messages.length === 0) {
+                        emptyChat.style.display = 'block';
+                        messagesContainer.innerHTML = '';
+                        messagesContainer.appendChild(emptyChat);
+                        return;
+                    }
+                    
+                    emptyChat.style.display = 'none';
+                    displayMessages(messages);
+                });
         }
 
-        // ==================== إنشاء عنصر رسالة مع إصلاح الرد ====================
+        // ==================== إنشاء عنصر رسالة ====================
         function createMessageElement(message) {
             const isSent = message.senderId === currentUser.uid;
             const senderName = isSent ? 'أنت' : (otherUserData?.displayName || otherUserData?.username || 'المستخدم');
@@ -1488,19 +1489,19 @@
                 bubble.innerHTML = `<img src="${message.content}" alt="صورة" loading="lazy" onclick="window.open('${message.content}', '_blank')">`;
             } else if (message.type === 'video') {
                 bubble.className = 'media-message';
-                bubble.innerHTML = `<video src="${message.content}" controls preload="metadata"></video>`;
+                bubble.innerHTML = `<video src="${message.content}" controls preload="metadata" onerror="this.style.display='none'; this.parentElement.innerHTML='[فيديو غير مدعوم]'">`;
             } else if (message.type === 'audio') {
                 bubble.className = 'audio-message';
                 bubble.innerHTML = `
                     <i class="fa-solid fa-circle-play" onclick="this.nextElementSibling.play()"></i>
-                    <audio src="${message.content}" preload="none"></audio>
+                    <audio src="${message.content}" preload="none" onerror="this.style.display='none'; this.parentElement.innerHTML='[صوت غير مدعوم]'"></audio>
                     <span>رسالة صوتية</span>
                 `;
             }
             
             wrapper.appendChild(bubble);
             
-            // إضافة حدث النقر للرد - فقط للرسائل النصية
+            // إضافة حدث النقر للرد
             wrapper.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (!isBlocked && !isBlockedBy) {
@@ -1552,14 +1553,14 @@
                 messageInput.value = '';
                 messageInput.style.height = 'auto';
                 messageInput.focus();
-                cancelReply(); // إخفاء شريط الرد بعد الإرسال
+                cancelReply();
 
             } catch (error) {
                 showMessage('خطأ في إرسال الرسالة', true);
             }
         }
 
-        // ==================== تسجيل الصوت ====================
+        // ==================== تسجيل الصوت (مُحسّن) ====================
         async function toggleRecording() {
             if (isBlocked || isBlockedBy) {
                 showMessage('لا يمكن إرسال التسجيلات الصوتية', true);
@@ -1567,22 +1568,27 @@
             }
 
             if (mediaRecorder && mediaRecorder.state === 'recording') {
+                // إيقاف التسجيل
                 mediaRecorder.stop();
                 mediaRecorder.stream.getTracks().forEach(track => track.stop());
                 clearInterval(recordingTimer);
                 recordIndicator.style.display = 'none';
                 micButton.classList.remove('recording');
             } else {
+                // بدء التسجيل
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     mediaRecorder = new MediaRecorder(stream);
                     audioChunks = [];
                     
-                    mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+                    mediaRecorder.ondataavailable = (e) => {
+                        audioChunks.push(e.data);
+                    };
                     
                     mediaRecorder.onstop = async () => {
                         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                         
+                        // رفع الصوت مباشرة بدون معالجة إضافية
                         try {
                             processingText.textContent = 'جاري رفع التسجيل...';
                             processingTimer.style.display = 'flex';
@@ -1691,6 +1697,13 @@
                 await sendProcessedVideo(file);
             }
             fileInput.value = '';
+        });
+
+        // تنظيف المستمعين عند الخروج
+        window.addEventListener('beforeunload', () => {
+            if (messagesListener && currentChatId) {
+                database.ref(`messages/${currentChatId}`).off('value', messagesListener);
+            }
         });
 
         auth.onAuthStateChanged(user => {

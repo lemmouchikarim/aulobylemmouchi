@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+    <link rel="icon" type="image/png" href="images/l.png">
+    <link rel="stylesheet" href="css/style.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Aulo - الإشعارات</title>
-    <link rel="icon" type="image/png" href="images/l.png">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -104,45 +105,6 @@
             font-weight: 600;
             font-size: 13px;
             cursor: pointer;
-        }
-        
-        /* أزرار قبول/رفض طلبات المتابعة */
-        .request-actions {
-            display: flex;
-            gap: 5px;
-            margin-top: 5px;
-        }
-        
-        .accept-btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        
-        .reject-btn {
-            background: #ff3b30;
-            color: white;
-            border: none;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        
-        /* إشعار الحظر */
-        .blocked-notification {
-            background: #fff1f0;
-        }
-        
-        .blocked-notification .not-type-icon {
-            background: var(--error-color);
-            color: white;
         }
     </style>
 </head>
@@ -249,43 +211,21 @@
 
         function getNotificationText(type, userName) {
             switch(type) {
-                case 'like':
-                    return `أعجب بمنشورك`;
-                case 'comment':
-                    return `علق على منشورك`;
-                case 'follow':
-                    return `بدأ بمتابعتك`;
-                case 'follow_request':
-                    return `يريد متابعتك`;
-                case 'follow_accepted':
-                    return `قبل طلب متابعتك`;
-                case 'chat':
-                    return `أرسل لك رسالة`;
-                case 'blocked':
-                    return `قام بحظرك`;
-                default:
-                    return `تفاعل معك`;
+                case 'like': return `أعجب بمنشورك`;
+                case 'comment': return `علق على منشورك`;
+                case 'follow': return `بدأ بمتابعتك`;
+                case 'chat': return `أرسل لك رسالة`;
+                default: return `تفاعل معك`;
             }
         }
 
         function getNotificationIcon(type) {
             switch(type) {
-                case 'like':
-                    return 'fa-heart';
-                case 'comment':
-                    return 'fa-comment';
-                case 'follow':
-                    return 'fa-user-check';
-                case 'follow_request':
-                    return 'fa-user-clock';
-                case 'follow_accepted':
-                    return 'fa-user-plus';
-                case 'chat':
-                    return 'fa-paper-plane';
-                case 'blocked':
-                    return 'fa-ban';
-                default:
-                    return 'fa-bell';
+                case 'like': return 'fa-heart';
+                case 'comment': return 'fa-comment';
+                case 'follow': return 'fa-user-plus';
+                case 'chat': return 'fa-paper-plane';
+                default: return 'fa-bell';
             }
         }
 
@@ -295,14 +235,9 @@
                 case 'comment':
                     return `main.html?post=${notification.postId}`;
                 case 'follow':
-                case 'follow_accepted':
                     return `profile.html?id=${notification.userId}`;
-                case 'follow_request':
-                    return '#';
                 case 'chat':
                     return `chat.html?id=${notification.userId}`;
-                case 'blocked':
-                    return `profile.html?id=${notification.userId}`;
                 default:
                     return '#';
             }
@@ -324,58 +259,6 @@
             }
         }
 
-        // قبول طلب متابعة
-        window.acceptFollowRequest = async (userId, notId, event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            try {
-                await database.ref(`followers/${currentUser.uid}/${userId}`).set({
-                    uid: userId,
-                    timestamp: Date.now()
-                });
-                
-                await database.ref(`following/${userId}/${currentUser.uid}`).set({
-                    uid: currentUser.uid,
-                    timestamp: Date.now()
-                });
-                
-                await database.ref(`followRequests/${currentUser.uid}/${userId}`).remove();
-                
-                await database.ref(`notifications/${userId}`).push({
-                    type: 'follow_accepted',
-                    userId: currentUser.uid,
-                    timestamp: Date.now(),
-                    read: false
-                });
-                
-                await database.ref(`notifications/${currentUser.uid}/${notId}`).remove();
-                
-                Aulo.snackbar('تم قبول طلب المتابعة');
-                
-            } catch (error) {
-                console.error('Error accepting request:', error);
-                Aulo.snackbar('حدث خطأ', true);
-            }
-        };
-
-        // رفض طلب متابعة
-        window.rejectFollowRequest = async (userId, notId, event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            try {
-                await database.ref(`followRequests/${currentUser.uid}/${userId}`).remove();
-                await database.ref(`notifications/${currentUser.uid}/${notId}`).remove();
-                
-                Aulo.snackbar('تم رفض الطلب');
-                
-            } catch (error) {
-                console.error('Error rejecting request:', error);
-                Aulo.snackbar('حدث خطأ', true);
-            }
-        };
-
         async function createNotificationElement(notification) {
             const notId = notification.id;
             const userData = await getUserData(notification.userId);
@@ -384,29 +267,18 @@
 
             const div = document.createElement('a');
             div.href = getNotificationLink(notification);
-            div.className = `not-item ${notification.read ? '' : 'unread'} ${notification.type === 'blocked' ? 'blocked-notification' : ''}`;
+            div.className = `not-item ${notification.read ? '' : 'unread'}`;
             div.dataset.id = notId;
 
             const timeAgo = formatTimeAgo(notification.timestamp);
             const icon = getNotificationIcon(notification.type);
             const text = getNotificationText(notification.type, userData.displayName || userData.username);
 
-            let actionButtons = '';
-            if (notification.type === 'follow_request') {
-                actionButtons = `
-                    <div class="request-actions">
-                        <button class="accept-btn" onclick="acceptFollowRequest('${notification.userId}', '${notId}', event)">قبول</button>
-                        <button class="reject-btn" onclick="rejectFollowRequest('${notification.userId}', '${notId}', event)">رفض</button>
-                    </div>
-                `;
-            }
-
             div.innerHTML = `
                 <img src="${userData.avatar || 'images/profile.png'}" class="not-avatar" loading="lazy">
                 <div class="not-content">
                     <b>${userData.displayName || userData.username}</b> ${text}
                     <span class="not-time">${timeAgo}</span>
-                    ${actionButtons}
                 </div>
                 <div class="not-type-icon">
                     <i class="fa-solid ${icon}"></i>
@@ -416,7 +288,7 @@
                 </span>
             `;
 
-            if (!notification.read && notification.type !== 'follow_request' && notification.type !== 'blocked') {
+            if (!notification.read) {
                 div.addEventListener('click', async (e) => {
                     e.preventDefault();
                     try {
@@ -527,7 +399,7 @@
                         }
                     }
 
-                    const unreadCount = notifications.filter(n => !n.read && n.type !== 'follow_request' && n.type !== 'blocked').length;
+                    const unreadCount = notifications.filter(n => !n.read).length;
                     markAllContainer.style.display = unreadCount > 0 ? 'flex' : 'none';
                     
                     updateNotificationDot();
@@ -548,31 +420,6 @@
                 window.location.href = 'index.html';
             }
         });
-	</script>
-		<!-- أضف هذا في نهاية script في not.html -->
-	<script>
-	// تسجيل Service Worker
-	if ('serviceWorker' in navigator) {
-		navigator.serviceWorker.register('/firebase-messaging-sw.js')
-			.then(reg => console.log('Service Worker registered'))
-			.catch(err => console.log('Service Worker error:', err));
-	}
-
-	// الاستماع للإشعارات الجديدة
-	if (currentUser) {
-		database.ref(`notifications/${currentUser.uid}`)
-			.orderByChild('read')
-			.equalTo(false)
-			.limitToLast(1)
-			.on('child_added', (snapshot) => {
-				db.playSound('not');
-			});
-	}
-	</script>
-	<script>
-	if ('serviceWorker' in navigator) {
-		navigator.serviceWorker.register('/firebase-messaging-sw.js');
-	}
-	</script>
+    </script>
 </body>
 </html>

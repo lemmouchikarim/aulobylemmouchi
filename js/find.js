@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <link rel="icon" type="image/png" href="images/l.png">
-    <link rel="stylesheet" href="css/style.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Aulo - البحث</title>
+    <link rel="icon" type="image/png" href="images/l.png">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -204,9 +203,7 @@
         const auth = firebase.auth();
 
         let currentUser = null;
-        let allUsers = [];
-        let searchTimeout = null;
-        let cachedUsers = null;
+        let cachedUsers = [];
 
         const searchInput = document.getElementById('user-search');
         const resultsContainer = document.getElementById('search-results');
@@ -216,7 +213,7 @@
         const recentList = document.getElementById('recent-list');
 
         async function loadAllUsers() {
-            if (cachedUsers) return cachedUsers;
+            if (cachedUsers.length > 0) return cachedUsers;
 
             try {
                 const snapshot = await database.ref('users').once('value');
@@ -338,6 +335,7 @@
             }, 300);
         }
 
+        let searchTimeout;
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim();
             

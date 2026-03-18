@@ -127,14 +127,6 @@
             color: white;
         }
         
-        .contact-info {
-            background: #f8f8f8;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            text-align: center;
-        }
-        
         @media (max-width: 600px) {
             .legal-container {
                 padding: 15px 10px 70px 10px;
@@ -265,11 +257,12 @@
         <div id="section8" class="legal-section">
             <h2>٨. تعديلات على الشروط</h2>
             <p>قد نقوم بتحديث هذه الشروط من وقت لآخر. سنقوم بإشعارك بأي تغييرات جوهرية عن طريق البريد الإلكتروني أو من خلال التطبيق. استمرارك في استخدام التطبيق بعد التعديلات يعني موافقتك على الشروط المحدثة.</p>
+            <p>آخر تحديث: 15 مارس 2024</p>
         </div>
         
-        <div class="contact-info">
-            <p>للتواصل بخصوص شروط الاستخدام:</p>
-            <p><i class="fa-regular fa-envelope" style="color: var(--primary-color);"></i> lemmouchikarimecn@gmail.com</p>
+        <div class="legal-section" style="text-align: center;">
+            <p>إذا كان لديك أي استفسار حول هذه الشروط، يرجى التواصل معنا:</p>
+            <p><i class="fa-regular fa-envelope" style="color: var(--primary-color);"></i> legal@aulo.com</p>
         </div>
     </main>
 
@@ -282,10 +275,5 @@
     </nav>
 
     <script src="js/ui.js"></script>
-	<script>
-	if ('serviceWorker' in navigator) {
-		navigator.serviceWorker.register('/firebase-messaging-sw.js');
-	}
-	</script>
 </body>
 </html>

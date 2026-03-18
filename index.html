@@ -1,39 +1,16 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aulo - تسجيل الدخول</title>
-    
-    <!-- Preconnect -->
-    <link rel="preconnect" href="https://aulobylemmouchi-default-rtdb.europe-west1.firebasedatabase.app">
-    <link rel="preconnect" href="https://www.gstatic.com">
-    
-    <!-- Favicon -->
     <link rel="icon" type="image/png" href="images/l.png">
-    
-    <!-- Font Awesome -->
+    <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aulo - تسجيل الدخول</title>
+    <link rel="icon" type="image/png" href="images/l.png">
+    <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <style>
-        :root {
-            --primary-color: #a018cb;
-            --bg-color: #ffffff;
-            --text-color: #1a1a1a;
-            --secondary-text: #757575;
-            --border-color: #f0f0f0;
-            --error-color: #ff3b30;
-        }
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-color);
-            color: var(--text-color);
-            direction: rtl;
-        }
-        
+        /* تنسيقات خاصة بصفحة الدخول */
         .auth-container {
             min-height: 100vh;
             display: flex;
@@ -42,62 +19,47 @@
             align-items: center;
             padding: 30px;
         }
-        
-        .auth-logo { width: 120px; margin-bottom: 30px; }
-        .auth-form { width: 100%; max-width: 350px; }
-        .input-group { margin-bottom: 15px; }
-        
-        input, textarea {
+        .auth-logo {
+            width: 120px;
+            margin-bottom: 30px;
+        }
+        .auth-form {
             width: 100%;
-            border: 1px solid var(--border-color);
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 16px;
-            outline: none;
-            font-family: inherit;
+            max-width: 350px;
         }
-        
-        input:focus, textarea:focus { border-color: var(--primary-color); }
-        
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 25px;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
+        .input-group {
+            margin-bottom: 15px;
         }
-        
-        .btn-primary:disabled {
-            background: #e0e0e0;
-            color: #a0a0a0;
-            cursor: not-allowed;
-        }
-        
         .auth-footer {
             margin-top: 25px;
             font-size: 14px;
             color: var(--secondary-text);
             text-align: center;
         }
-        
         .toggle-auth {
             color: var(--primary-color);
             font-weight: 700;
             cursor: pointer;
+            text-decoration: none;
         }
         
-        .extra-fields { display: none; animation: fadeIn 0.3s; }
+        /* تنسيق حقول التسجيل الإضافية */
+        .extra-fields {
+            display: none;
+            margin-top: 10px;
+            animation: fadeIn 0.3s ease;
+        }
         
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
         
-        .gender-options { display: flex; gap: 15px; margin-top: 5px; }
+        .gender-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+        }
         
         .gender-option {
             flex: 1;
@@ -106,6 +68,7 @@
             border: 1px solid var(--border-color);
             border-radius: 10px;
             cursor: pointer;
+            transition: 0.2s;
         }
         
         .gender-option.selected {
@@ -114,13 +77,19 @@
             border-color: var(--primary-color);
         }
         
+        .gender-option i {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
         .profile-upload {
             border: 2px dashed var(--border-color);
             padding: 15px;
             border-radius: 10px;
             text-align: center;
             cursor: pointer;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
         
         .profile-upload i {
@@ -130,116 +99,175 @@
         }
         
         #avatar-preview {
-            display: none;
-            margin-top: 10px;
-            text-align: center;
-        }
-        
-        #avatar-preview img {
             width: 80px;
             height: 80px;
             border-radius: 50%;
             object-fit: cover;
-            border: 3px solid var(--primary-color);
+            margin: 10px auto;
+            display: none;
         }
         
-        .snackbar {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-size: 14px;
-            display: none;
-            z-index: 2000;
+        .date-input {
+            direction: ltr;
+            text-align: right;
         }
         
         .loading-spinner {
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
+            border: 3px solid rgba(255,255,255,.3);
             border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
             margin-left: 10px;
         }
         
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* تنسيق الموافقة على الشروط */
+        .terms-checkbox {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+        
+        .terms-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+        
+        .terms-checkbox label {
+            cursor: pointer;
+            color: var(--text-color);
+        }
+        
+        .terms-checkbox a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .terms-checkbox a:hover {
+            text-decoration: underline;
+        }
+        
+        .terms-error {
+            color: var(--error-color);
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .terms-links {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body>
+
     <div class="auth-container">
-        <img src="images/logo.png" alt="Aulo" class="auth-logo" loading="lazy">
-        
-        <div class="auth-form">
+        <img src="images/logo.png" alt="Aulo Logo" class="auth-logo">
+
+        <div class="auth-form" id="login-section">
             <h2 style="margin-bottom: 20px; text-align: center;">مرحباً بك في Aulo</h2>
             
+            <!-- حقل اسم المستخدم (إلزامي) -->
             <div class="input-group">
-                <input type="text" id="username" placeholder="اسم المستخدم" autocomplete="off">
+                <input type="text" id="username" placeholder="اسم المستخدم (username)" autocomplete="off">
             </div>
-            
+
+            <!-- حقل كلمة السر (إلزامي) -->
             <div class="input-group">
                 <input type="password" id="password" placeholder="كلمة السر">
             </div>
-            
-            <div class="extra-fields" id="signupFields">
+
+            <!-- الحقول الإضافية للتسجيل (تظهر فقط في وضع إنشاء الحساب) -->
+            <div class="extra-fields" id="signup-fields">
+                <!-- تاريخ الميلاد (إلزامي) -->
                 <div class="input-group">
-                    <input type="date" id="birthdate">
+                    <input type="date" id="birthdate" class="date-input">
                 </div>
-                
+
+                <!-- الجنس (إلزامي) -->
                 <div class="input-group">
                     <label style="font-size: 14px; color: var(--secondary-text); display: block; margin-bottom: 5px;">الجنس</label>
                     <div class="gender-options">
-                        <div class="gender-option" onclick="selectGender('male')" id="genderMale">ذكر</div>
-                        <div class="gender-option" onclick="selectGender('female')" id="genderFemale">أنثى</div>
+                        <div class="gender-option" onclick="selectGender('male')" id="gender-male">
+                            <i class="fa-solid fa-mars"></i>
+                            <span>ذكر</span>
+                        </div>
+                        <div class="gender-option" onclick="selectGender('female')" id="gender-female">
+                            <i class="fa-solid fa-venus"></i>
+                            <span>أنثى</span>
+                        </div>
                     </div>
                 </div>
-                
+
+                <!-- الاسم المعروض (اختياري) -->
                 <div class="input-group">
                     <input type="text" id="displayName" placeholder="الاسم المعروض (اختياري)">
                 </div>
-                
+
+                <!-- السيرة الذاتية (اختياري) -->
                 <div class="input-group">
                     <textarea id="bio" placeholder="نبذة عنك (اختياري)" rows="2"></textarea>
                 </div>
-                
-                <!-- حقل رفع الصورة -->
+
+                <!-- الصورة الشخصية (اختياري) -->
                 <div class="input-group">
                     <label for="avatar-upload" class="profile-upload">
                         <i class="fa-solid fa-camera"></i>
                         <div>إضافة صورة شخصية</div>
                         <span>اختياري</span>
                     </label>
-                    <input type="file" id="avatar-upload" accept="image/*" hidden>
-                    <div id="avatar-preview">
-                        <img src="#" alt="معاينة الصورة">
-                    </div>
+                    <input type="file" id="avatar-upload" hidden accept="image/*">
+                    <img id="avatar-preview" src="#" alt="معاينة الصورة">
                 </div>
+                
+                <!-- الموافقة على الشروط (إلزامي) -->
+                <div class="terms-checkbox">
+                    <input type="checkbox" id="terms-agree">
+                    <label for="terms-agree">
+                        أوافق على 
+                        <span class="terms-links">
+                            <a href="terms.html" target="_blank">شروط الاستخدام</a>
+                            و
+                            <a href="privacy.html" target="_blank">سياسة الخصوصية</a>
+                            و
+                            <a href="disclaimer.html" target="_blank">الإخلاء القانوني</a>
+                        </span>
+                    </label>
+                </div>
+                <div id="terms-error" class="terms-error">يجب الموافقة على الشروط وسياسة الخصوصية</div>
             </div>
-            
-            <button id="authBtn" class="btn-primary" disabled>
-                <span id="btnText">دخول</span>
-                <span id="btnSpinner" class="loading-spinner" style="display: none;"></span>
+
+            <button id="auth-btn" class="btn-primary" disabled>
+                <span id="btn-text">دخول</span>
+                <span id="btn-spinner" class="loading-spinner" style="display: none;"></span>
             </button>
-            
+
             <div class="auth-footer">
-                ليس لديك حساب؟ 
-                <span class="toggle-auth" onclick="toggleAuth()">إنشاء حساب جديد</span>
+                ليس لديك حساب؟ <span class="toggle-auth" onclick="toggleAuth()">إنشاء حساب جديد</span>
             </div>
         </div>
     </div>
-    
-    <div id="snackbar" class="snackbar"></div>
-    
-    <!-- Firebase -->
+
+    <div id="msg" class="snackbar"></div>
+
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
-    
+    <script src="js/ui.js"></script>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBZj9QplNw-VmwSl8Ijv_b6nIi4ghcHDms",
@@ -255,106 +283,130 @@
         const database = firebase.database();
         const auth = firebase.auth();
 
-        let currentMode = 'login';
+        const cloudName = "daxh9u5dc";
+        const uploadPreset = "aulobylemmouchi";
+
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const birthdateInput = document.getElementById('birthdate');
+        const authBtn = document.getElementById('auth-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnSpinner = document.getElementById('btn-spinner');
+        const signupFields = document.getElementById('signup-fields');
+        const avatarUpload = document.getElementById('avatar-upload');
+        const avatarPreview = document.getElementById('avatar-preview');
+        const termsCheckbox = document.getElementById('terms-agree');
+        const termsError = document.getElementById('terms-error');
+        
         let selectedGender = '';
         let avatarFile = null;
-        
-        function showMessage(text, isError = false) {
-            const msg = document.getElementById('snackbar');
-            msg.textContent = text;
-            msg.style.background = isError ? '#ff3b30' : '#333';
-            msg.style.display = 'block';
-            setTimeout(() => msg.style.display = 'none', 3000);
-        }
-        
+        let isSignupMode = false;
+
         function setLoading(isLoading) {
-            const btn = document.getElementById('authBtn');
-            const btnText = document.getElementById('btnText');
-            const btnSpinner = document.getElementById('btnSpinner');
-            
-            btn.disabled = isLoading;
+            authBtn.disabled = isLoading;
             btnText.style.display = isLoading ? 'none' : 'inline';
             btnSpinner.style.display = isLoading ? 'inline-block' : 'none';
         }
-        
-        // معالجة رفع الصورة
-        document.getElementById('avatar-upload').addEventListener('change', function(e) {
+
+        avatarUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 if (file.size > 5 * 1024 * 1024) {
-                    showMessage('الصورة كبيرة جداً (الحد الأقصى 5 ميجابايت)', true);
+                    Aulo.snackbar('الصورة كبيرة جداً (الحد الأقصى 5 ميجابايت)', { type: 'error' });
                     return;
                 }
-                
+                avatarFile = file;
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    const preview = document.getElementById('avatar-preview');
-                    preview.style.display = 'block';
-                    preview.querySelector('img').src = e.target.result;
+                reader.onload = (e) => {
+                    avatarPreview.src = e.target.result;
+                    avatarPreview.style.display = 'block';
                 };
                 reader.readAsDataURL(file);
-                avatarFile = file;
             }
         });
-        
-        function selectGender(gender) {
+
+        window.selectGender = (gender) => {
             selectedGender = gender;
-            document.querySelectorAll('.gender-option').forEach(opt => opt.classList.remove('selected'));
-            document.getElementById(gender === 'male' ? 'genderMale' : 'genderFemale').classList.add('selected');
+            document.querySelectorAll('.gender-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.getElementById(`gender-${gender}`).classList.add('selected');
             validateInputs();
+        };
+
+        function validateInputs() {
+            const userValue = usernameInput.value.trim();
+            const passValue = passwordInput.value.trim();
+            
+            if (!isSignupMode) {
+                // وضع تسجيل الدخول
+                authBtn.disabled = !(userValue.length >= 3 && passValue.length >= 6);
+            } else {
+                // وضع إنشاء حساب
+                const birthdateValue = birthdateInput.value;
+                const isBirthdateValid = birthdateValue.length > 0;
+                const isGenderValid = selectedGender !== '';
+                const isTermsChecked = termsCheckbox.checked;
+                
+                authBtn.disabled = !(userValue.length >= 3 && 
+                                    passValue.length >= 6 && 
+                                    isBirthdateValid && 
+                                    isGenderValid && 
+                                    isTermsChecked);
+                
+                // إظهار/إخفاء رسالة الخطأ
+                termsError.style.display = isTermsChecked ? 'none' : 'block';
+            }
         }
-        
-        function toggleAuth() {
-            currentMode = currentMode === 'login' ? 'signup' : 'login';
-            document.querySelector('h2').textContent = currentMode === 'login' ? 'مرحباً بك في Aulo' : 'انضم إلى Aulo';
-            document.getElementById('btnText').textContent = currentMode === 'login' ? 'دخول' : 'إنشاء الحساب';
-            document.getElementById('signupFields').style.display = currentMode === 'login' ? 'none' : 'block';
-            document.querySelector('.auth-footer').innerHTML = currentMode === 'login' 
-                ? 'ليس لديك حساب؟ <span class="toggle-auth" onclick="toggleAuth()">إنشاء حساب جديد</span>'
-                : 'لديك حساب بالفعل؟ <span class="toggle-auth" onclick="toggleAuth()">تسجيل الدخول</span>';
+
+        usernameInput.addEventListener('input', validateInputs);
+        passwordInput.addEventListener('input', validateInputs);
+        birthdateInput.addEventListener('change', validateInputs);
+        termsCheckbox.addEventListener('change', validateInputs);
+
+        window.toggleAuth = () => {
+            isSignupMode = !isSignupMode;
+
+            if (!isSignupMode) {
+                btnText.innerText = 'دخول';
+                document.querySelector('h2').innerText = 'مرحباً بك في Aulo';
+                document.querySelector('.auth-footer').innerHTML = 'ليس لديك حساب؟ <span class="toggle-auth" onclick="toggleAuth()">إنشاء حساب جديد</span>';
+                signupFields.style.display = 'none';
+            } else {
+                btnText.innerText = 'إنشاء الحساب';
+                document.querySelector('h2').innerText = 'انضم إلى Aulo';
+                document.querySelector('.auth-footer').innerHTML = 'لديك حساب بالفعل؟ <span class="toggle-auth" onclick="toggleAuth()">تسجيل الدخول</span>';
+                signupFields.style.display = 'block';
+            }
             
             selectedGender = '';
             document.querySelectorAll('.gender-option').forEach(opt => opt.classList.remove('selected'));
-            document.getElementById('birthdate').value = '';
+            birthdateInput.value = '';
             document.getElementById('displayName').value = '';
             document.getElementById('bio').value = '';
-            document.getElementById('avatar-preview').style.display = 'none';
             avatarFile = null;
-            validateInputs();
-        }
-        
-        function validateInputs() {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
+            avatarPreview.style.display = 'none';
+            avatarPreview.src = '#';
+            avatarUpload.value = '';
+            termsCheckbox.checked = false;
+            termsError.style.display = 'none';
             
-            if (currentMode === 'login') {
-                document.getElementById('authBtn').disabled = !(username.length >= 3 && password.length >= 6);
-            } else {
-                const birthdate = document.getElementById('birthdate').value;
-                document.getElementById('authBtn').disabled = !(
-                    username.length >= 3 && 
-                    password.length >= 6 && 
-                    birthdate && 
-                    selectedGender
-                );
-            }
-        }
-        
-        document.getElementById('username').addEventListener('input', validateInputs);
-        document.getElementById('password').addEventListener('input', validateInputs);
-        document.getElementById('birthdate')?.addEventListener('change', validateInputs);
-        
+            validateInputs();
+        };
+
         async function uploadToCloudinary(file) {
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('upload_preset', 'aulobylemmouchi');
+            formData.append('upload_preset', uploadPreset);
             formData.append('folder', 'aulobylemmouchi/avatars');
             
             try {
-                const response = await fetch(`https://api.cloudinary.com/v1_1/daxh9u5dc/image/upload`, {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
                     method: 'POST',
                     body: formData
                 });
+                
+                if (!response.ok) throw new Error('فشل الرفع');
                 const data = await response.json();
                 return data.secure_url;
             } catch (error) {
@@ -362,7 +414,7 @@
                 return null;
             }
         }
-        
+
         async function handleLogin(username, password) {
             try {
                 setLoading(true);
@@ -373,12 +425,14 @@
                 let userEmail = null;
                 let userId = null;
                 
-                snapshot.forEach(child => {
+                snapshot.forEach((child) => {
                     userEmail = child.val().email;
                     userId = child.key;
                 });
                 
-                if (!userEmail) throw new Error('اسم المستخدم غير موجود');
+                if (!userEmail) {
+                    throw new Error('اسم المستخدم غير موجود');
+                }
                 
                 await auth.signInWithEmailAndPassword(userEmail, password);
                 
@@ -389,16 +443,19 @@
                     });
                 }
                 
-                showMessage('تم تسجيل الدخول بنجاح');
-                setTimeout(() => window.location.href = 'main.html', 1000);
+                Aulo.snackbar('تم تسجيل الدخول بنجاح', { type: 'success' });
+                setTimeout(() => {
+                    window.location.href = 'main.html';
+                }, 1000);
                 
             } catch (error) {
-                showMessage(error.message, true);
+                console.error('Login error:', error);
+                Aulo.snackbar(error.message, { type: 'error' });
                 setLoading(false);
             }
         }
-        
-        async function handleSignup(username, password) {
+
+        async function handleSignup(username, password, birthdate, gender, displayName, bio, avatarFile) {
             try {
                 setLoading(true);
                 
@@ -410,8 +467,8 @@
                 }
                 
                 const email = `${username}@${username}.app`;
-                const result = await auth.createUserWithEmailAndPassword(email, password);
-                const user = result.user;
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
                 
                 let avatarUrl = 'images/profile.png';
                 if (avatarFile) {
@@ -421,58 +478,75 @@
                 
                 const userData = {
                     uid: user.uid,
-                    username,
-                    email,
-                    displayName: document.getElementById('displayName').value.trim() || username,
-                    bio: document.getElementById('bio').value.trim() || '',
-                    gender: selectedGender,
-                    birthdate: document.getElementById('birthdate').value,
+                    username: username,
+                    email: email,
+                    displayName: displayName || username,
+                    bio: bio || '',
+                    gender: gender,
+                    birthdate: birthdate,
                     avatar: avatarUrl,
                     createdAt: Date.now(),
                     lastSeen: Date.now(),
                     online: true,
                     postsCount: 0,
-                    likesCount: 0
+                    likesCount: 0,
+                    termsAgreed: true,
+                    termsAgreedAt: Date.now()
                 };
                 
                 await database.ref(`users/${user.uid}`).set(userData);
                 
-                showMessage('تم إنشاء الحساب بنجاح');
-                setTimeout(() => window.location.href = 'main.html', 1000);
+                Aulo.snackbar('تم إنشاء الحساب بنجاح', { type: 'success' });
+                setTimeout(() => {
+                    window.location.href = 'main.html';
+                }, 1000);
                 
             } catch (error) {
-                showMessage(error.message, true);
+                console.error('Signup error:', error);
+                Aulo.snackbar(error.message, { type: 'error' });
                 setLoading(false);
             }
         }
-        
-        document.getElementById('authBtn').addEventListener('click', async () => {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
+
+        document.getElementById('auth-btn').addEventListener('click', async () => {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
             
             if (!username || !password) {
-                showMessage('الرجاء إدخال جميع الحقول المطلوبة', true);
+                Aulo.snackbar('الرجاء إدخال جميع الحقول المطلوبة', { type: 'error' });
                 return;
             }
             
-            if (currentMode === 'login') {
+            if (!isSignupMode) {
                 await handleLogin(username, password);
             } else {
-                const birthdate = document.getElementById('birthdate').value;
+                const birthdate = birthdateInput.value;
                 if (!birthdate) {
-                    showMessage('الرجاء إدخال تاريخ الميلاد', true);
+                    Aulo.snackbar('الرجاء إدخال تاريخ الميلاد', { type: 'error' });
                     return;
                 }
+                
                 if (!selectedGender) {
-                    showMessage('الرجاء اختيار الجنس', true);
+                    Aulo.snackbar('الرجاء اختيار الجنس', { type: 'error' });
                     return;
                 }
-                await handleSignup(username, password);
+                
+                if (!termsCheckbox.checked) {
+                    Aulo.snackbar('يجب الموافقة على الشروط وسياسة الخصوصية', { type: 'error' });
+                    return;
+                }
+                
+                const displayName = document.getElementById('displayName').value.trim();
+                const bio = document.getElementById('bio').value.trim();
+                
+                await handleSignup(username, password, birthdate, selectedGender, displayName, bio, avatarFile);
             }
         });
-        
-        auth.onAuthStateChanged(user => {
-            if (user) window.location.href = 'main.html';
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                window.location.href = 'main.html';
+            }
         });
     </script>
 </body>

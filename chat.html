@@ -258,7 +258,7 @@
             border-radius: 8px;
             padding: 8px 12px;
             margin-bottom: 8px;
-            border-right: 3px solid var(--primary-color);
+            border-right: 3px solid #a018cb;
             font-size: 12px;
             opacity: 0.9;
         }
@@ -267,10 +267,10 @@
             font-weight: 600;
             margin-bottom: 3px;
             font-size: 11px;
-            color: var(--primary-color);
+            color: #a018cb;
         }
 
-        /* شريط الرد */
+        /* شريط الرد - تم تعديله ليظهر فوق منطقة الإدخال مباشرة */
         .reply-bar {
             position: fixed;
             bottom: 70px;
@@ -279,17 +279,16 @@
             background: white;
             border-top: 1px solid #eee;
             padding: 10px 15px;
-            display: flex;
+            display: none; /* مخفي افتراضياً */
             align-items: center;
             gap: 12px;
             z-index: 150;
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            animation: slideUp 0.3s ease;
         }
 
         .reply-bar.show {
-            transform: translateY(0);
+            display: flex; /* يظهر فقط عند إضافة كلاس show */
         }
 
         .reply-info {
@@ -297,14 +296,22 @@
             background: #f8f8f8;
             border-radius: 20px;
             padding: 10px 15px;
-            border-right: 3px solid var(--primary-color);
+            border-right: 3px solid #a018cb;
         }
 
         .reply-info .replying-to {
             font-size: 11px;
-            color: var(--primary-color);
+            color: #a018cb;
             font-weight: 600;
             margin-bottom: 3px;
+        }
+
+        .reply-info .reply-content {
+            font-size: 13px;
+            color: #1a1a1a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .close-reply {
@@ -784,7 +791,7 @@
         <i class="fa-solid fa-eye"></i> هذه المحادثة للقراءة فقط
     </div>
 
-    <!-- شريط الرد -->
+    <!-- شريط الرد - مخفي افتراضياً -->
     <div id="replyBar" class="reply-bar">
         <div class="reply-info" id="replyInfo">
             <div class="replying-to" id="replyingTo">الرد على...</div>
@@ -1054,17 +1061,17 @@
             return new URLSearchParams(window.location.search).get('id');
         }
 
-        // ==================== نظام الرد ====================
+        // ==================== نظام الرد المُصلح ====================
         window.cancelReply = () => {
             replyingToMessage = null;
-            replyBar.classList.remove('show');
+            replyBar.classList.remove('show'); // إخفاء شريط الرد
         };
 
         function setReplyTo(message, senderName, content) {
             replyingToMessage = message;
             replyingTo.textContent = `الرد على ${senderName}`;
             replyContent.textContent = content.length > 50 ? content.substring(0, 47) + '...' : content;
-            replyBar.classList.add('show');
+            replyBar.classList.add('show'); // إظهار شريط الرد
             messageInput.focus();
         }
 
@@ -1437,7 +1444,7 @@
             }
         }
 
-        // ==================== إنشاء عنصر رسالة ====================
+        // ==================== إنشاء عنصر رسالة مع إصلاح الرد ====================
         function createMessageElement(message) {
             const isSent = message.senderId === currentUser.uid;
             const senderName = isSent ? 'أنت' : (otherUserData?.displayName || otherUserData?.username || 'المستخدم');
@@ -1493,13 +1500,14 @@
             
             wrapper.appendChild(bubble);
             
-            // إضافة مستمع السحب للرد (اختصار للكود)
-            wrapper.addEventListener('click', () => {
+            // إضافة حدث النقر للرد - فقط للرسائل النصية
+            wrapper.addEventListener('click', (e) => {
+                e.stopPropagation();
                 if (!isBlocked && !isBlockedBy) {
-                    const content = message.type === 'text' ? displayContent : 
-                                   (message.type === 'image' ? '📷 صورة' : 
-                                   (message.type === 'video' ? '🎥 فيديو' : '🎤 رسالة صوتية'));
-                    setReplyTo(message, senderName, content);
+                    const contentForReply = message.type === 'text' ? displayContent : 
+                                           (message.type === 'image' ? '📷 صورة' : 
+                                           (message.type === 'video' ? '🎥 فيديو' : '🎤 رسالة صوتية'));
+                    setReplyTo(message, senderName, contentForReply);
                 }
             });
             
@@ -1544,7 +1552,7 @@
                 messageInput.value = '';
                 messageInput.style.height = 'auto';
                 messageInput.focus();
-                cancelReply();
+                cancelReply(); // إخفاء شريط الرد بعد الإرسال
 
             } catch (error) {
                 showMessage('خطأ في إرسال الرسالة', true);
